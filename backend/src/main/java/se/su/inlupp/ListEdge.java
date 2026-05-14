@@ -15,7 +15,8 @@ public class ListEdge<T> implements Edge<T> {
         return destination;
     }
 
-    public void setWeight(int weight) {
+    public void setWeight(int weight) throws IllegalArgumentException {
+        if (weight < 0) throw new IllegalArgumentException();
         this.weight = weight;
     }
 
