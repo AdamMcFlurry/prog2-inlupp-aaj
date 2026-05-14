@@ -4,6 +4,7 @@ import java.util.*;
 
 public class ListGraph<T> implements Graph<T> {
 
+  //Ska vi ha en List istället
   private final Map<T, Set<Edge<T>>> nodeEdgeMap = new HashMap<>();
 
   @Override
