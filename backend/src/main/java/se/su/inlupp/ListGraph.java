@@ -12,11 +12,11 @@ public class ListGraph<T> implements Graph<T> {
   }
 
   @Override
-  public void remove(T node) {
+  public void remove(T node) throws NoSuchElementException {
     if (!hasNode(node)) throw new NoSuchElementException();
     
     nodeEdgeMap.remove(node);
-
+    //Behövs ett Set här i mappen?
     Map<T, Edge<T>> toBeRemoved = new HashMap<>();
     
     for (Map.Entry<T, Set<Edge<T>>> i : nodeEdgeMap.entrySet()) {
@@ -36,7 +36,11 @@ public class ListGraph<T> implements Graph<T> {
   }
 
   @Override
-  public void connect(T node1, T node2, String name, int weight) {
+  public void connect(T node1, T node2, String name, int weight) throws NoSuchElementException, IllegalArgumentException, IllegalStateException {
+    if (!hasNode(node1) || !hasNode(node2)) throw new NoSuchElementException();
+    if (weight < 0) throw new IllegalArgumentException();
+    if (getEdgeBetween(node1, node2) != null) throw new IllegalStateException();
+
     this.add(node1);
     this.add(node2);
 
@@ -48,13 +52,22 @@ public class ListGraph<T> implements Graph<T> {
   }
 
   @Override
-  public void disconnect(T node1, T node2) {
-    throw new UnsupportedOperationException("Unimplemented method 'disconnect'");
+  public void disconnect(T node1, T node2) throws NoSuchElementException, IllegalStateException {
+    if (!hasNode(node1) || !hasNode(node2)) throw new NoSuchElementException();
+    if (getEdgeBetween(node1, node2) == null) throw new IllegalStateException();
+
+    nodeEdgeMap.get(node1).remove(getEdgeBetween(node1, node2));;
+    nodeEdgeMap.get(node2).remove(getEdgeBetween(node2, node1));
+
   }
 
   @Override
-  public void setConnectionWeight(T node1, T node2, int weight) {
-    throw new UnsupportedOperationException("Unimplemented method 'setConnectionWeight'");
+  public void setConnectionWeight(T node1, T node2, int weight) throws NoSuchElementException, IllegalArgumentException, IllegalStateException {
+    if (!hasNode(node1) || !hasNode(node2) || getEdgeBetween(node1, node2) == null) throw new NoSuchElementException();
+    if (weight < 0) throw new IllegalArgumentException();
+
+    getEdgeBetween(node1, node2).setWeight(weight);
+    getEdgeBetween(node2, node1).setWeight(weight);
   }
 
   @Override
