@@ -30,6 +30,6 @@ public class ListEdge<T> implements Edge<T> {
 
     @Override
     public String toString() {
-        return String.format("%s (%s: %f)", this.destination, this.name, this.weight);
+        return String.format("till %s med %s tar %s", this.destination, this.name, this.weight);
     }
 }

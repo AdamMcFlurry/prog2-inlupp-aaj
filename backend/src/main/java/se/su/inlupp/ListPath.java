@@ -12,6 +12,7 @@ public class ListPath<T> implements Path<T> {
         this.start = start;
     }
 
+    //får man ha en till public method här?
     public void addEdge(Edge<T> edge) {
         edgeList.add(edge);
     }
@@ -58,4 +59,14 @@ public class ListPath<T> implements Path<T> {
         return it;
     }
     
+    @Override
+    public String toString() {
+        StringBuilder sB = new StringBuilder();
+        Iterator<Edge<T>> it = iterator();
+        sB.append(getStart() + " ");
+        while (it.hasNext()) {
+            sB.append(it.next().toString());
+        }
+        return sB.toString();
+    }
 }

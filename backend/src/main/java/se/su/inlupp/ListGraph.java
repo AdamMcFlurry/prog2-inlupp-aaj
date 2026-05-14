@@ -98,8 +98,23 @@ public class ListGraph<T> implements Graph<T> {
   @Override
   public Iterator<T> iterator() {
     //vrf funkar inte getNodes()
-    Iterator<T> it = nodeEdgeMap.keySet().iterator();
+    Iterator<T> it = getNodes().iterator();
     return it;
+  }
+
+  @Override
+  public String toString() {
+    Iterator<T> it = iterator();
+    StringBuilder sB = new StringBuilder(); 
+    while (it.hasNext()) {
+      T nextNode = it.next();
+      sB.append(nextNode);
+      for (Edge<T> edge : getEdgesFrom(nextNode)) {
+        sB.append(edge.toString() + "\n");
+      }       
+    }
+    System.out.println(sB.toString());
+    return sB.toString();
   }
 }
 
