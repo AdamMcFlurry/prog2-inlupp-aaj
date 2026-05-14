@@ -4,7 +4,7 @@ import java.util.*;
 
 public class ListGraph<T> implements Graph<T> {
 
-  private Map<T, Set<Edge<T>>> nodeEdgeMap = new HashMap<>();
+  private final Map<T, Set<Edge<T>>> nodeEdgeMap = new HashMap<>();
 
   @Override
   public void add(T node) {
@@ -13,15 +13,20 @@ public class ListGraph<T> implements Graph<T> {
 
   @Override
   public void remove(T node) {
-    try {
-      nodeEdgeMap.remove(node);
-      nodeEdgeMap.forEach((k, v) -> {
-        if (v.contains(node)) {
-          v.remove(node);
-        }
-      });
-    } catch (NoSuchElementException e) {
-      e.printStackTrace();
+    if (!hasNode(node)) throw new NoSuchElementException();
+    
+    nodeEdgeMap.remove(node);
+
+    Map<T, Edge<T>> toBeRemoved = new HashMap<>();
+    
+    for (Map.Entry<T, Set<Edge<T>>> i : nodeEdgeMap.entrySet()) {
+      for (Edge<T> edge : i.getValue()) {
+        if (edge.getDestination().equals(node)) toBeRemoved.put(i.getKey(), edge);
+      }
+    }
+
+    for(Map.Entry<T, Edge<T>> TBRSet : toBeRemoved.entrySet()) {
+      nodeEdgeMap.get(TBRSet.getKey()).remove(TBRSet.getValue());
     }
   }
 
