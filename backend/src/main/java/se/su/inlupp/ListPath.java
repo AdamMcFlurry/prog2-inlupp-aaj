@@ -6,20 +6,19 @@ import java.util.List;
 
 public class ListPath<T> implements Path<T> {
     private final List<Edge<T>> edgeList = new ArrayList<>();
+    //får start vara en variable här
     private final T start;
 
-    public ListPath(T start) {
+    public ListPath(T start, List<Edge<T>> edges) {
         this.start = start;
+        for (Edge<T> edge : edges) {
+            edgeList.add(edge);
+        }
     }
 
-    //får man ha en till public method här?
-    public void addEdge(Edge<T> edge) {
-        edgeList.add(edge);
-    }
 
     @Override
     public T getStart() {
-        // return edgeList.get(0).getDestination();
         return start;
     }
 
@@ -32,7 +31,6 @@ public class ListPath<T> implements Path<T> {
     @Override
     public int getTotalWeight() {
         int totalWeight = 0;
-        //edgeList.forEach((e)->totalWeight += e.getWeight());
         for (Edge<T> edge : edgeList) {
             totalWeight += edge.getWeight();
         }
@@ -65,7 +63,7 @@ public class ListPath<T> implements Path<T> {
         Iterator<Edge<T>> it = iterator();
         sB.append(getStart() + " ");
         while (it.hasNext()) {
-            sB.append(it.next().toString());
+            sB.append(it.next().toString() + " ");
         }
         return sB.toString();
     }

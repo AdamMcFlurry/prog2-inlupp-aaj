@@ -526,6 +526,7 @@ public class GraphTest {
     createExampleGraph();
     PathFinder<String> dfs = new DFSPathFinder<>();
     Path<String> path = dfs.findPath(graph, VALID_NODE_1, "C");
+    // assertEquals(0, path);
     assertNotNull(path, "Fel: DFSPathFinder borde ha hittat en väg mellan A och C.");
     assertEquals(VALID_NODE_1, path.getStart(), "Fel: vägens startnod borde vara A.");
     assertEquals("C", path.getEnd(), "Fel: vägens slutnod borde vara C.");
@@ -693,6 +694,7 @@ public class GraphTest {
 
     finder = new DFSPathFinder<>();
     Path<String> dfsPath = finder.findPath(graph, VALID_NODE_1, "C");
+    // assertEquals(0, dfsPath);
     assertNotNull(dfsPath, "Fel: DFS borde ha hittat en väg.");
 
     finder = new BFSPathFinder<>();

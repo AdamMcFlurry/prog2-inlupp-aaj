@@ -1,6 +1,9 @@
 package se.su.inlupp;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class DFSPathFinder<T> implements PathFinder<T> {
@@ -8,28 +11,34 @@ public class DFSPathFinder<T> implements PathFinder<T> {
   @Override
   public Path<T> findPath(Graph<T> graph, T from, T to) {
     Map<T, T> connections = new HashMap<>();
-    ListPath<T> path = new ListPath<>(from);
+    List<Edge<T>> edges = new ArrayList<Edge<T>>();
 
-    connect(null, from, connections, graph);
+    connect(from, null, connections, graph);
 
-    T current = from;
-    while (current != null && !current.equals(to) && connections.containsValue(to)) {
+    T current = to;
+
+    while (current != null && !current.equals(from) && connections.containsKey(to)) {
       T next = connections.get(current);
-      Edge<T> edge = graph.getEdgeBetween(current, next);
-      path.addEdge(edge);
+      System.out.println("n" + next);
+      System.out.println("c" + current);
+      Edge<T> edge = graph.getEdgeBetween(next, current);
+      System.out.println("e" + edge.toString());
+      edges.add(edge);
       current = next;
     }
+    
+    Collections.reverse(edges);
 
-    return path.getEdges().isEmpty() ? null : path;
+    return edges.size() == 0 ? null : new ListPath<>(from, edges);
   }
 
-  // får man ha med privata methoder
-  private void connect(T from, T to, Map<T, T> connections, Graph<T> graph) {
-    connections.put(from, to);
+
+  private void connect(T to, T from, Map<T, T> connections, Graph<T> graph) {
+    connections.put(to, from);
     for (Edge<T> edge : graph.getEdgesFrom(to)) {
       T destination = edge.getDestination();
-      if (!connections.containsValue(destination)) {
-        connect(to, destination, connections, graph);
+      if (!connections.containsKey(destination)) {
+        connect(destination, to, connections, graph);
       }
     }
   }

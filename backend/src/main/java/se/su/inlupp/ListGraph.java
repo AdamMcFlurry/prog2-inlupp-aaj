@@ -3,8 +3,6 @@ package se.su.inlupp;
 import java.util.*;
 
 public class ListGraph<T> implements Graph<T> {
-
-  //Ska vi ha en List istället
   private final Map<T, Set<Edge<T>>> nodeEdgeMap = new HashMap<>();
 
   @Override
@@ -97,7 +95,6 @@ public class ListGraph<T> implements Graph<T> {
 
   @Override
   public Iterator<T> iterator() {
-    //vrf funkar inte getNodes()
     Iterator<T> it = getNodes().iterator();
     return it;
   }
@@ -113,7 +110,6 @@ public class ListGraph<T> implements Graph<T> {
         sB.append(edge.toString() + "\n");
       }       
     }
-    System.out.println(sB.toString());
     return sB.toString();
   }
 }

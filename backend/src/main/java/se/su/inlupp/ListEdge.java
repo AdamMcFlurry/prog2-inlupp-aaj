@@ -1,8 +1,8 @@
 package se.su.inlupp;
 
 public class ListEdge<T> implements Edge<T> {
-    private T destination;
-    private String name;
+    private final T destination;
+    private final String name;
     private int weight;
 
     public ListEdge(T destination, String name, int weight) {
