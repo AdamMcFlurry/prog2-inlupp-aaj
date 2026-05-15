@@ -7,10 +7,11 @@ public class BFSPathFinder<T> implements PathFinder<T> {
   @Override
   public Path<T> findPath(Graph<T> graph, T from, T to) {
     Map<T, T> connections = new HashMap<>();
-    LinkedList<T> queue = new LinkedList<>();
-    ListPath<T> path = new ListPath<T>(from);
     List<Edge<T>> edgeList = new ArrayList<>();
+
+    LinkedList<T> queue = new LinkedList<>();
     
+    connections.put(from, null);
     queue.add(from);
     
     while (!queue.isEmpty()){
@@ -26,27 +27,20 @@ public class BFSPathFinder<T> implements PathFinder<T> {
         
       }
     }
+    if (!connections.containsKey(to)) return null;
 
     T current = to;
     
     while (current != null && !current.equals(from)) {
       T next = connections.get(current);
-      if (next != null) {
-        Edge<T> edge = graph.getEdgeBetween(next, current);
-        edgeList.add(edge);
-        current = connections.get(current);
-      } else {
-        return null;
-      }
+      Edge<T> edge = graph.getEdgeBetween(next, current);
+      edgeList.add(edge);
+      current = next;
     }
+    Collections.reverse(edgeList);
 
-    int index = edgeList.size()-1;
-    while (index >= 0) {
-      path.addEdge(edgeList.get(index));
-      index--;
-    }
+    return new ListPath<>(from, edgeList);
 
-    return path;  
-  };
+  }
 
 }
