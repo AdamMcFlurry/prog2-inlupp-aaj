@@ -19,6 +19,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.stage.Stage;
+import javafx.application.Platform;
 
 public class Gui extends Application {
 
@@ -40,15 +41,19 @@ public void start(Stage stage) {
 
     MenuItem newItem = new MenuItem("New Route");
     fileMenu.getItems().add(newItem);
+    newItem.setOnAction(new NewHandler());
 
     MenuItem saveItem = new MenuItem("Save Route");
     fileMenu.getItems().add(saveItem);
+    saveItem.setOnAction(new SaveHandler());
 
     MenuItem loadItem = new MenuItem("Load Route");
     fileMenu.getItems().add(loadItem);
+    loadItem.setOnAction(new LoadHandler());
 
     MenuItem exitItem = new MenuItem("Exit");
     fileMenu.getItems().add(exitItem);
+    exitItem.setOnAction(new ExitHandler());
 
     root.setTop(menuBar);
 
@@ -93,6 +98,30 @@ public void start(Stage stage) {
             }
         }
     }
+  
+  class NewHandler implements EventHandler<ActionEvent>{
+    public void handle(ActionEvent event) {
+      System.out.println("New Route selected");
+      // Vill skapa en ny route från två nya noder, samma graph, ej ny graph.
+    }
+  }
+  class SaveHandler implements EventHandler<ActionEvent>{
+    public void handle(ActionEvent event) {
+      System.out.println("Save Route selected");
+      // Vill spara route:n så att den kan kommas åt vid senare tillfälle, tillåt modifikation av sparad route?
+    }
+  }
+  class LoadHandler implements EventHandler<ActionEvent>{
+    public void handle(ActionEvent event) {
+      System.out.println("Load Route selected");
+      // Vill komma åt tidigare sparad route
+    }
+  }
+  class ExitHandler implements EventHandler<ActionEvent>{
+    public void handle(ActionEvent event) {
+      Platform.exit();
+    }
+  }
 }
 
 
