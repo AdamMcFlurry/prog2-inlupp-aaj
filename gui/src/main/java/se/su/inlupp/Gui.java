@@ -12,6 +12,9 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ListView;
+import javafx.scene.control.Menu;
+import javafx.scene.control.MenuBar;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
@@ -30,6 +33,25 @@ public void start(Stage stage) {
     graph.add("Kiruna");
 
     BorderPane root = new BorderPane();
+
+    MenuBar menuBar = new MenuBar();
+    Menu fileMenu = new Menu("Route");
+    menuBar.getMenus().add(fileMenu);
+
+    MenuItem newItem = new MenuItem("New Route");
+    fileMenu.getItems().add(newItem);
+
+    MenuItem saveItem = new MenuItem("Save Route");
+    fileMenu.getItems().add(saveItem);
+
+    MenuItem loadItem = new MenuItem("Load Route");
+    fileMenu.getItems().add(loadItem);
+
+    MenuItem exitItem = new MenuItem("Exit");
+    fileMenu.getItems().add(exitItem);
+
+    root.setTop(menuBar);
+
     
     listView = new ListView<>();
     listView.setPrefWidth(150);
