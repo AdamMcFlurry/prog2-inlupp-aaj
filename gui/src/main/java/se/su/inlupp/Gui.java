@@ -18,14 +18,25 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.application.Platform;
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
+
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import javafx.embed.swing.SwingFXUtils;
+import javafx.scene.control.Alert;
+import javafx.scene.image.WritableImage;
 
 public class Gui extends Application {
 
     private TextField searchField;
     private Graph<String> graph = new ListGraph<String>();
     ListView<String> listView;
+    private BorderPane root;
 
 public void start(Stage stage) {
     graph.add("Stockholm");
@@ -33,7 +44,7 @@ public void start(Stage stage) {
     graph.add("Köpenhamn");
     graph.add("Kiruna");
 
-    BorderPane root = new BorderPane();
+    root = new BorderPane();
 
     MenuBar menuBar = new MenuBar();
     Menu fileMenu = new Menu("Route");
@@ -100,27 +111,71 @@ public void start(Stage stage) {
     }
   
   class NewHandler implements EventHandler<ActionEvent>{
+    @Override
     public void handle(ActionEvent event) {
-      System.out.println("New Route selected");
-      // Vill skapa en ny route från två nya noder, samma graph, ej ny graph.
+      graph = new ListGraph<>();
+      AddDefaultStations();
+      // Är du säker -sak (F7 - Varning vid osparade ändringar)
+      
     }
   }
   class SaveHandler implements EventHandler<ActionEvent>{
+    @Override
     public void handle(ActionEvent event) {
-      System.out.println("Save Route selected");
-      // Vill spara route:n så att den kan kommas åt vid senare tillfälle, tillåt modifikation av sparad route?
+      // F6, F9
+      // Sparas både som textfil (kan laddas up och manipuleras) och som .png (kan visas men inte manipuleras) Hittade i F14
+      savePNG();
+      saveTXT();
     }
   }
   class LoadHandler implements EventHandler<ActionEvent>{
+    @Override
     public void handle(ActionEvent event) {
-      System.out.println("Load Route selected");
-      // Vill komma åt tidigare sparad route
+      // F6, F8, F9
+      // Ladda upp. Både som textfil (manipuleras) och som .png (inte manipuleras)
     }
   }
   class ExitHandler implements EventHandler<ActionEvent>{
     public void handle(ActionEvent event) {
       Platform.exit();
     }
+  }
+  private void AddDefaultStations() {
+    graph.add("T-Centralen");
+    graph.add("Hötorget");
+    graph.add("Farsta");
+    graph.add("Skarpnäck");
+    graph.add("Gullmarsplan");
+  }
+
+  private void saveTXT() {
+    try {
+      PrintWriter writer = new PrintWriter("route.txt");
+
+      for (String node : graph.getNodes()){
+        writer.println("NODE:" + node);
+      }
+      for (String node : graph.getNodes()){
+        for (Edge<String> edge : graph.getEdgesFrom(node)) {
+          writer.println("EDGE;" + node + ";" + edge.getDestination() + ";" + edge.getName() + ";" + edge.getWeight());
+        }
+      }
+      writer.close();
+
+    } catch (Exception e) {
+      Alert alert = new Alert(Alert.AlertType.ERROR, "Could not save route.");
+      alert.showAndWait();
+    }
+  }
+  private void savePNG() {
+    try {
+        WritableImage image = root.snapshot(null,null);
+        BufferedImage bufferedImage = SwingFXUtils.fromFXImage(image, null);
+        ImageIO.write(bufferedImage, "png", new File("route.png"));
+      } catch (IOException e) {
+        Alert alert = new Alert(Alert.AlertType.ERROR,"IO Error");
+        alert.showAndWait();
+      }
   }
 }
 
