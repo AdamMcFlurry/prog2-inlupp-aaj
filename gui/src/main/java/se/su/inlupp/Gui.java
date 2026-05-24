@@ -1,6 +1,9 @@
 package se.su.inlupp;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
+import java.util.Scanner;
 
 import javafx.application.Application;
 import javafx.collections.FXCollections;
@@ -18,7 +21,6 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
-import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.application.Platform;
 import java.io.File;
@@ -29,6 +31,8 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.control.Alert;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 
 public class Gui extends Application {
@@ -124,6 +128,7 @@ public void start(Stage stage) {
     public void handle(ActionEvent event) {
       // F6, F9
       // Sparas både som textfil (kan laddas up och manipuleras) och som .png (kan visas men inte manipuleras) Hittade i F14
+      //Hur ska vi göra med att välja antingen PNG eller TXT?
       savePNG();
       saveTXT();
     }
@@ -133,6 +138,9 @@ public void start(Stage stage) {
     public void handle(ActionEvent event) {
       // F6, F8, F9
       // Ladda upp. Både som textfil (manipuleras) och som .png (inte manipuleras)
+      //Hur ska vi göra med att välja antingen PNG eller TXT?
+      loadTXT();
+      loadPNG();
     }
   }
   class ExitHandler implements EventHandler<ActionEvent>{
@@ -173,9 +181,48 @@ public void start(Stage stage) {
         BufferedImage bufferedImage = SwingFXUtils.fromFXImage(image, null);
         ImageIO.write(bufferedImage, "png", new File("route.png"));
       } catch (IOException e) {
-        Alert alert = new Alert(Alert.AlertType.ERROR,"IO Error");
+        Alert alert = new Alert(Alert.AlertType.ERROR,"Could not save PNG");
         alert.showAndWait();
       }
+  }
+  private void loadTXT() {
+    try {
+      graph = new ListGraph<>();
+      Scanner scanner = new Scanner(new File("route.txt"));
+      List<String[]> edgeList = new ArrayList<>();
+
+      while (scanner.hasNextLine()) {
+        String line = scanner.nextLine();
+        String[] parts = line.split(";");
+        if (line.startsWith("NODE:")) {
+          String node = line.substring(5);
+          graph.add(node);
+        }
+        else if (parts[0].equals("EDGE:")) {
+          edgeList.add(parts);
+        }
+      }
+      scanner.close();
+      for (String[] edge : edgeList) {
+        graph.connect(edge[1], edge[2], edge[3], Integer.parseInt(edge[4]));
+        ObservableList<String> updatedList = FXCollections.observableArrayList(graph.getNodes());
+        FXCollections.sort(updatedList);
+        listView.setItems(updatedList);
+      }
+    } catch (Exception e) {
+      Alert alert = new Alert(Alert.AlertType.ERROR, "Could not load PNG.");
+      alert.showAndWait();
+    }
+  }
+  private void loadPNG() {
+    try {
+      Image image = new Image(new File("route.png").toURI().toString());
+      ImageView imageView = new ImageView(image);
+      root.setCenter(imageView);
+    } catch (Exception e) {
+      Alert alert = new Alert(Alert.AlertType.ERROR, "Could not load PNG.");
+      alert.showAndWait();
+    }
   }
 }
 
