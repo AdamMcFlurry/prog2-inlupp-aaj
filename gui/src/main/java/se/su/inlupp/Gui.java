@@ -65,15 +65,19 @@ public class Gui extends Application {
     root = new BorderPane();
 
     MenuItem newItem = new MenuItem("New Route");
+    newItem.setOnAction(new NewHandler());
     fileMenu.getItems().add(newItem);
 
     MenuItem saveItem = new MenuItem("Save Route");
+    saveItem.setOnAction(new SaveHandler());
     fileMenu.getItems().add(saveItem);
 
     MenuItem loadItem = new MenuItem("Load Route");
+    loadItem.setOnAction(new LoadHandler());
     fileMenu.getItems().add(loadItem);
 
     MenuItem exitItem = new MenuItem("Exit");
+    exitItem.setOnAction(new ExitHandler());
     fileMenu.getItems().add(exitItem);
 
         root.setTop(menuBar);
