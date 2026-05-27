@@ -5,9 +5,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Scanner;
 
 import javax.imageio.ImageIO;
 
@@ -24,6 +21,7 @@ import javafx.scene.Cursor;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.ListView;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
@@ -47,6 +45,8 @@ public class Gui extends Application {
   private Button addButton;
   private BorderPane root;
   // private Button addConnectionButton;
+    private String imagePath;
+    private boolean unsavedChanges = false;
 
   @Override
   public void start(Stage stage) {
@@ -85,6 +85,7 @@ public class Gui extends Application {
     addButton = new Button("Add Node");
     addButton.setOnAction(new AddHandler());
     Button deleteButton = new Button("Delete Node");
+        deleteButton.setOnAction(new DeleteHandler());
     Button addConnectionButton = new Button("Add Connection");
     addConnectionButton.setOnAction(new AddConnectionHandler());
     addConnectionButton.setDisable(true);
@@ -112,6 +113,23 @@ public class Gui extends Application {
     stage.setScene(scene);
     stage.show();
   }
+        nodeArea = new Pane();
+        nodeArea.getChildren().add(nodeControls);
+        
+        root.setLeft(listView);
+        root.setCenter(nodeArea);
+        // root.setCenter(nodeControls);
+        Scene scene = new Scene(root, 640, 480);
+        stage.setScene(scene);
+        
+        stage.setOnCloseRequest(event -> {
+          if (!confirmUnsavedChanges()) {
+            event.consume();
+          }
+        });
+
+        stage.show();
+    }
 
   public static void main(String[] args) {
     launch(args);
@@ -124,6 +142,7 @@ public class Gui extends Application {
       nodeArea.setCursor(Cursor.CROSSHAIR);
       String word = searchField.getText();
       graph.add(word);
+            unsavedChanges = true;
 
       int index = Collections.binarySearch((listView.getItems()), word);
       if (index < 0) {
@@ -178,10 +197,30 @@ public class Gui extends Application {
 
       nodeArea.setCursor(Cursor.DEFAULT);
 
-      addButton.setDisable(false);
-      nodeArea.setOnMouseClicked(null);
+            addButton.setDisable(false);
+            nodeArea.setOnMouseClicked(null);
+        }
     }
-  }
+    class DeleteHandler implements EventHandler<ActionEvent> {
+      public void handle(ActionEvent event){
+        String selectedNode = listView.getSelectionModel().getSelectedItem();
+
+        if (selectedNode == null) {
+          Alert alert = new Alert(Alert.AlertType.ERROR,"No node selected.");
+          alert.showAndWait();
+          return;
+        }
+        try {
+          graph.remove(selectedNode);
+          listView.getItems().remove(selectedNode);
+          unsavedChanges = true;
+
+        } catch (NoSuchElementException e){
+          Alert alert = new Alert(Alert.AlertType.ERROR,"Node does not exist.");
+          alert.showAndWait();
+        }
+      }
+    }
 
   // class SaveButtonHandler implements EventHandler<ActionEvent> {
   // @Override
@@ -198,17 +237,17 @@ public class Gui extends Application {
   // }
 
   class NewHandler implements EventHandler<ActionEvent> {
-    @Override
     public void handle(ActionEvent event) {
-      graph = new ListGraph<>();
-      AddDefaultStations();
-      // Är du säker -sak (F7 - Varning vid osparade ändringar)
+      if (confirmUnsavedChanges()) {
+        graph = new ListGraph<>();
+        AddDefaultStations();
 
+        unsavedChanges = false;
+      }
     }
   }
 
   class SaveHandler implements EventHandler<ActionEvent> {
-    @Override
     public void handle(ActionEvent event) {
       // F6, F9
       // Sparas både som textfil (kan laddas up och manipuleras) och som .png (kan
@@ -220,20 +259,23 @@ public class Gui extends Application {
   }
 
   class LoadHandler implements EventHandler<ActionEvent> {
-    @Override
     public void handle(ActionEvent event) {
       // F6, F8, F9
       // Ladda upp. Både som textfil (manipuleras) och som .png (inte manipuleras)
-      // Hur ska vi göra med att välja antingen PNG eller TXT?
-      loadTXT();
-      loadPNG();
+      //Hur ska vi göra med att välja antingen PNG eller TXT?
+      if (confirmUnsavedChanges()){
+        loadTXT();
+        loadPNG();
+      }
     }
   }
 
   class ExitHandler implements EventHandler<ActionEvent> {
     public void handle(ActionEvent event) {
-      Platform.exit();
-    }
+      if (confirmUnsavedChanges()){
+        Platform.exit();
+      }
+      }
   }
 
   private void AddDefaultStations() {
@@ -248,31 +290,41 @@ public class Gui extends Application {
     try {
       PrintWriter writer = new PrintWriter("route.txt");
 
-      for (String node : graph.getNodes()) {
+      writer.println("IMAGE:" + imagePath);
+
+      for (String node : graph.getNodes()){
         writer.println("NODE:" + node);
       }
       for (String node : graph.getNodes()) {
         for (Edge<String> edge : graph.getEdgesFrom(node)) {
-          writer.println("EDGE;" + node + ";" + edge.getDestination() + ";" + edge.getName() + ";" + edge.getWeight());
+          writer.println("EDGE:" + node + ":" + edge.getDestination() + ":" + edge.getName() + ":" + edge.getWeight());
         }
       }
       writer.close();
+      unsavedChanges = false;
 
     } catch (Exception e) {
       Alert alert = new Alert(Alert.AlertType.ERROR, "Could not save route.");
       alert.showAndWait();
+      unsavedChanges = true;
+
     }
   }
 
   private void savePNG() {
     try {
-      WritableImage image = root.snapshot(null, null);
-      BufferedImage bufferedImage = SwingFXUtils.fromFXImage(image, null);
-      ImageIO.write(bufferedImage, "png", new File("route.png"));
-    } catch (IOException e) {
-      Alert alert = new Alert(Alert.AlertType.ERROR, "Could not save PNG");
-      alert.showAndWait();
-    }
+        File file = new File("route.png");
+        WritableImage image = root.snapshot(null,null);
+        BufferedImage bufferedImage = SwingFXUtils.fromFXImage(image, null);
+        ImageIO.write(bufferedImage, "png", file);
+
+        imagePath = file.getAbsolutePath();
+        unsavedChanges = false;
+      } catch (IOException e) {
+        Alert alert = new Alert(Alert.AlertType.ERROR,"Could not save PNG");
+        alert.showAndWait();
+        unsavedChanges = true;
+      }
   }
 
   private void loadTXT() {
@@ -283,8 +335,15 @@ public class Gui extends Application {
 
       while (scanner.hasNextLine()) {
         String line = scanner.nextLine();
-        String[] parts = line.split(";");
-        if (line.startsWith("NODE:")) {
+        String[] parts = line.split(":");
+
+        if (parts[0].equals("IMAGE")) {
+          imagePath = parts[1];
+          Image image = new Image(new File(imagePath).toURI().toString());
+          ImageView imageView = new ImageView(image);
+          root.setCenter(imageView);
+        }
+        else if (line.startsWith("NODE:")) {
           String node = line.substring(5);
           graph.add(node);
         } else if (parts[0].equals("EDGE:")) {
@@ -314,4 +373,19 @@ public class Gui extends Application {
       alert.showAndWait();
     }
   }
+  private boolean confirmUnsavedChanges(){
+    if (!unsavedChanges) {
+      return true;
+    }
+    Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+    alert.setTitle("Unsaved changes");
+    alert.setHeaderText("You have unsaved changes.");
+    alert.setContentText("Are you sure you want to continue?");
+
+    Optional<ButtonType> result = alert.showAndWait();
+
+    return result.isPresent() && result.get() == ButtonType.OK;
+  }
 }
+
+
