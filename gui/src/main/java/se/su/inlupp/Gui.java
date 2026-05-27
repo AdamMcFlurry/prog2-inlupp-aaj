@@ -22,11 +22,13 @@ import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
@@ -37,6 +39,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.shape.Line;
@@ -73,18 +76,40 @@ public class Gui extends Application {
     MenuItem exitItem = new MenuItem("Exit");
     fileMenu.getItems().add(exitItem);
 
-    root.setTop(menuBar);
+        root.setTop(menuBar);
+        
+        FlowPane frånTill= new FlowPane();  //ARFkod
+ 
+        TextField input1= new TextField();
+        input1.setPromptText("Startnod");
+        input1.setStyle("-fx-border-color: black");
 
-    listView = new ListView<>();
-    listView.setPrefWidth(150);
-    ObservableList<String> nodeList = FXCollections.observableArrayList(graph.getNodes());
-    FXCollections.sort(nodeList);
-    listView.setItems(nodeList);
+        TextField input2= new TextField();
+        input2.setPromptText("Slutnod");
+        input2.setStyle("-fx-border-color: black");
 
-    FlowPane nodeControls = new FlowPane();
-    // nodeControls.setAlignment(Pos.CENTER);
-    nodeControls.setPadding(new Insets(5));
-    nodeControls.setHgap(5);
+        Label pil= new Label(" --> ");
+
+        frånTill.getChildren().addAll(input1, pil, input2);
+        frånTill.setAlignment( Pos.TOP_RIGHT);
+
+        VBox frånTillBox = new VBox();
+        frånTillBox.getChildren().addAll(menuBar,frånTill);
+        root.setTop(frånTillBox);//Slut på ARFkod
+
+
+        listView = new ListView<>();
+        listView.setPrefWidth(150);
+        ObservableList<String> nodeList = FXCollections.observableArrayList(graph.getNodes());
+        FXCollections.sort(nodeList);
+        listView.setItems(nodeList);
+
+        //
+        
+        FlowPane nodeControls = new FlowPane();
+        // nodeControls.setAlignment(Pos.CENTER);
+        nodeControls.setPadding(new Insets(5));
+        nodeControls.setHgap(5);
 
     searchField = new TextField();
     Button searchButton = new Button("Search");
