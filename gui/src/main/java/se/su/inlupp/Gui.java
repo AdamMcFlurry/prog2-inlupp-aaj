@@ -76,40 +76,37 @@ public class Gui extends Application {
     MenuItem exitItem = new MenuItem("Exit");
     fileMenu.getItems().add(exitItem);
 
-        root.setTop(menuBar);
-        
-        FlowPane frånTill= new FlowPane();  //ARFkod
- 
-        TextField input1= new TextField();
-        input1.setPromptText("Startnod");
-        input1.setStyle("-fx-border-color: black");
+    root.setTop(menuBar);
 
-        TextField input2= new TextField();
-        input2.setPromptText("Slutnod");
-        input2.setStyle("-fx-border-color: black");
+    FlowPane frånTill = new FlowPane(); // ARFkod
 
-        Label pil= new Label(" --> ");
+    TextField input1 = new TextField();
+    input1.setPromptText("Startnod");
+    input1.setStyle("-fx-border-color: black");
 
-        frånTill.getChildren().addAll(input1, pil, input2);
-        frånTill.setAlignment( Pos.TOP_RIGHT);
+    TextField input2 = new TextField();
+    input2.setPromptText("Slutnod");
+    input2.setStyle("-fx-border-color: black");
 
-        VBox frånTillBox = new VBox();
-        frånTillBox.getChildren().addAll(menuBar,frånTill);
-        root.setTop(frånTillBox);//Slut på ARFkod
+    Label pil = new Label(" --> ");
 
+    frånTill.getChildren().addAll(input1, pil, input2);
+    frånTill.setAlignment(Pos.TOP_RIGHT);
 
-        listView = new ListView<>();
-        listView.setPrefWidth(150);
-        ObservableList<String> nodeList = FXCollections.observableArrayList(graph.getNodes());
-        FXCollections.sort(nodeList);
-        listView.setItems(nodeList);
+    VBox frånTillBox = new VBox();
+    frånTillBox.getChildren().addAll(menuBar, frånTill);
+    root.setBottom(frånTillBox);// Slut på ARFkod
 
-        //
-        
-        FlowPane nodeControls = new FlowPane();
-        // nodeControls.setAlignment(Pos.CENTER);
-        nodeControls.setPadding(new Insets(5));
-        nodeControls.setHgap(5);
+    listView = new ListView<>();
+    listView.setPrefWidth(150);
+    ObservableList<String> nodeList = FXCollections.observableArrayList(graph.getNodes());
+    FXCollections.sort(nodeList);
+    listView.setItems(nodeList);
+
+    FlowPane nodeControls = new FlowPane();
+    // nodeControls.setAlignment(Pos.CENTER);
+    nodeControls.setPadding(new Insets(5));
+    nodeControls.setHgap(5);
 
     searchField = new TextField();
     Button searchButton = new Button("Search");
@@ -133,7 +130,7 @@ public class Gui extends Application {
         .addListener((ObservableValue<? extends String> observable, String oldValue, String newValue) -> {
           addConnectionButton.setDisable(false);
         });
-    
+
     nodeArea = new Pane();
     nodeArea.getChildren().add(nodeControls);
 
@@ -175,19 +172,23 @@ public class Gui extends Application {
       listView.getSelectionModel().selectedItemProperty()
           .addListener((ObservableValue<? extends String> observable, String oldValue, String newValue) -> {
             graph.connect(oldValue, newValue, (oldValue + " till " + newValue), 0);
-            
-            Line newLine = new Line();
-            newLine.setStartX(getNodeByName(oldValue).getX());
-            newLine.setStartY(getNodeByName(oldValue).getY());
-            newLine.setEndX(getNodeByName(newValue).getX());
-            newLine.setEndY(getNodeByName(newValue).getY());
-            newLine.startXProperty().bind(getNodeByName(oldValue).layoutXProperty());
-            newLine.startYProperty().bind(getNodeByName(oldValue).layoutYProperty());
-            newLine.endXProperty().bind(getNodeByName(newValue).layoutXProperty());
-            newLine.endYProperty().bind(getNodeByName(newValue).layoutYProperty());
-            nodeArea.getChildren().add(newLine);
+
+            createNewLine(getNodeByName(oldValue), getNodeByName(newValue));
           });
     }
+  }
+
+  private void createNewLine(Node node1, Node node2) {
+    Line newLine = new Line();
+    newLine.setStartX(node1.getX());
+    newLine.setStartY(node1.getY());
+    newLine.setEndX(node2.getX());
+    newLine.setEndY(node2.getY());
+    newLine.startXProperty().bind(node1.layoutXProperty());
+    newLine.startYProperty().bind(node1.layoutYProperty());
+    newLine.endXProperty().bind(node2.layoutXProperty());
+    newLine.endYProperty().bind(node2.layoutYProperty());
+    nodeArea.getChildren().add(newLine);
   }
 
   private Node getNodeByName(String nodeName) {
