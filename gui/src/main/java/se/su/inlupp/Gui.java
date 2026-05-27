@@ -87,7 +87,7 @@ public class Gui extends Application {
     root.setTop(menuBar);
 
     FlowPane frånTill = new FlowPane(); // ARFkod
-
+    frånTill.setHgap(10);
     input1 = new TextField();
     input1.setPromptText("Startnod");
     input1.setStyle("-fx-border-color: black");
@@ -99,9 +99,12 @@ public class Gui extends Application {
     Button findPathButton = new Button("Find Path");
     findPathButton.setOnAction(new FindPathHandler());
 
+    Button searchPaternButton = new Button ("Switsh search patern");
+    
+
     Label pil = new Label(" --> ");
 
-    frånTill.getChildren().addAll(input1, pil, input2, findPathButton);
+    frånTill.getChildren().addAll(input1, pil, input2, findPathButton, searchPaternButton);
     frånTill.setAlignment(Pos.TOP_RIGHT);
 
     VBox frånTillBox = new VBox();
