@@ -15,6 +15,7 @@ import javax.imageio.ImageIO;
 
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -34,6 +35,7 @@ import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TextInputDialog;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
@@ -44,7 +46,6 @@ import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.shape.Line;
 import javafx.stage.Stage;
-import se.su.inlupp.Gui.ClickHandler;
 
 public class Gui extends Application {
 
@@ -59,7 +60,7 @@ public class Gui extends Application {
   private boolean unsavedChanges = false;
   private TextField input1;
   private TextField input2;
-  private final List<GuiEdgeLine> lineList = new ArrayList<>();
+  private final ArrayList<GuiEdgeLine> lineList = new ArrayList<>();
 
   @Override
   public void start(Stage stage) {
@@ -96,12 +97,16 @@ public class Gui extends Application {
     input2.setPromptText("Slutnod");
     input2.setStyle("-fx-border-color: black");
 
+    Button addConnectionButton = new Button("Add Connection");
+    addConnectionButton.setOnAction(new AddConnectionHandler());
+    // addConnectionButton.setDisable(true);
+
     Button findPathButton = new Button("Find Path");
     findPathButton.setOnAction(new FindPathHandler());
 
     Label pil = new Label(" --> ");
 
-    frånTill.getChildren().addAll(input1, pil, input2, findPathButton);
+    frånTill.getChildren().addAll(input1, pil, input2, findPathButton, addConnectionButton);
     frånTill.setAlignment(Pos.TOP_RIGHT);
 
     VBox frånTillBox = new VBox();
@@ -125,10 +130,7 @@ public class Gui extends Application {
     addButton.setOnAction(new AddHandler());
     Button deleteButton = new Button("Delete Node");
     deleteButton.setOnAction(new DeleteHandler());
-    Button addConnectionButton = new Button("Add Connection");
-    addConnectionButton.setOnAction(new AddConnectionHandler());
-    addConnectionButton.setDisable(true);
-    nodeControls.getChildren().addAll(searchField, searchButton, addButton, deleteButton, addConnectionButton);
+    nodeControls.getChildren().addAll(searchField, searchButton, addButton, deleteButton);
 
     nodeArea = new Pane();
     nodeArea.getChildren().add(nodeControls);
@@ -177,15 +179,18 @@ public class Gui extends Application {
   class AddConnectionHandler implements EventHandler<ActionEvent> {
     @Override
     public void handle(ActionEvent event) {
-      Alert alert = new Alert(Alert.AlertType.INFORMATION, "Please select a second node in the list");
-      alert.showAndWait();
+      String node1 = input1.getText();
+      String node2 = input2.getText();
+      TextInputDialog tiDialog = new TextInputDialog();
+      tiDialog.setTitle("Connection Weight Input");
+      tiDialog.setHeaderText("Enter the weight of the dialog: ");
+      tiDialog.setContentText("Weight: ");
 
-      listView.getSelectionModel().selectedItemProperty()
-          .addListener((ObservableValue<? extends String> observable, String oldValue, String newValue) -> {
-            graph.connect(oldValue, newValue, (oldValue + " till " + newValue), 0);
-
-            createNewLine(getNodeByName(oldValue), getNodeByName(newValue), graph.getEdgeBetween(oldValue, newValue));
-          });
+      Optional<String> result = tiDialog.showAndWait();
+      if (result.isPresent()) {
+        graph.connect(node1, node2, (node1 + " till " + node2), Integer.parseInt(result.get()));
+        createNewLine(getNodeByName(node1), getNodeByName(node2), graph.getEdgeBetween(node1, node2));
+      }
     }
   }
 
@@ -240,14 +245,23 @@ public class Gui extends Application {
     public void handle(ActionEvent event) {
       PathFinder<String> bfsPathFinder = new BFSPathFinder<>();
       Path<String> path = bfsPathFinder.findPath(graph, input1.getText(), input2.getText());
-
-      for (Edge<String> edge : path.getEdges()) {
+      int totalWeight = 0;
+      for (GuiEdgeLine edgeLine : lineList) {
+        edgeLine.setStyle("-fx-stroke: black;");
+      }
+      
+        for (Edge<String> edge : path.getEdges()) {
         for (GuiEdgeLine edgeLine : lineList) {
           if (edgeLine.getLineEdge().equals(edge)) {
             edgeLine.setStyle("-fx-stroke: red;");
+            totalWeight+=edge.getWeight();
+
           }
         }
       }
+
+      Alert alert = new Alert(Alert.AlertType.INFORMATION, "The total weight of the path is " + totalWeight);
+      alert.showAndWait();
     }
   }
 
