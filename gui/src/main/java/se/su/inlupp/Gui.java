@@ -33,12 +33,16 @@ import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 import javafx.application.Platform;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 
 import javax.imageio.ImageIO;
+
 import java.awt.image.BufferedImage;
+import java.util.*;
+
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.control.Alert;
 import javafx.scene.image.Image;
@@ -52,16 +56,13 @@ public class Gui extends Application {
     private Graph<String> graph = new ListGraph<String>();
     private ListView<String> listView;
     private Button addButton;
-    ListView<String> listView;
     private BorderPane root;
 
     public void start(Stage stage) {
-        BorderPane root = new BorderPane();
-
         MenuBar menuBar = new MenuBar();
         Menu fileMenu = new Menu("Route");
         menuBar.getMenus().add(fileMenu);
-    root = new BorderPane();
+        root = new BorderPane();
 
         MenuItem newItem = new MenuItem("New Route");
         fileMenu.getItems().add(newItem);
