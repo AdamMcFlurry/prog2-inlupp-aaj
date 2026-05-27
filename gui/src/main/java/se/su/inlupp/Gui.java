@@ -9,7 +9,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
-import java.util.Scanner;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.FileNotFoundException;
@@ -463,6 +462,10 @@ public class Gui extends Application {
 
         Node startNode = getNodeByName(from);
         Node endNode = getNodeByName(to);
+
+        Edge<String> guiEdge = graph.getEdgeBetween(from, to);
+        createNewLine(startNode, endNode, guiEdge);
+
         ObservableList<String> updatedList = FXCollections.observableArrayList(graph.getNodes());
         FXCollections.sort(updatedList);
         listView.setItems(updatedList);
