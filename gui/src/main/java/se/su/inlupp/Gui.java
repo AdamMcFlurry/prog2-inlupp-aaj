@@ -1,16 +1,19 @@
 package se.su.inlupp;
 
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Scanner;
 
 import javax.imageio.ImageIO;
 
-import java.awt.image.BufferedImage;
-
 import javafx.application.Application;
+import javafx.application.Platform;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.embed.swing.SwingFXUtils;
@@ -26,177 +29,213 @@ import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
-import javafx.application.Platform;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
-
-import javax.imageio.ImageIO;
-
-import java.awt.image.BufferedImage;
-import java.util.*;
-
-import javafx.embed.swing.SwingFXUtils;
-import javafx.scene.control.Alert;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import javafx.scene.image.WritableImage;
 
 public class Gui extends Application {
 
-    private Pane nodeArea;
-    private TextField searchField;
-    private Graph<String> graph = new ListGraph<String>();
-    private ListView<String> listView;
-    private Button addButton;
-    private BorderPane root;
+  private Pane nodeArea;
+  private TextField searchField;
+  private Graph<String> graph = new ListGraph<>();
+  private ListView<String> listView;
+  private Button addButton;
+  private BorderPane root;
+  // private Button addConnectionButton;
 
-    public void start(Stage stage) {
-        MenuBar menuBar = new MenuBar();
-        Menu fileMenu = new Menu("Route");
-        menuBar.getMenus().add(fileMenu);
-        root = new BorderPane();
+  @Override
+  public void start(Stage stage) {
+    MenuBar menuBar = new MenuBar();
+    Menu fileMenu = new Menu("Route");
+    menuBar.getMenus().add(fileMenu);
+    root = new BorderPane();
 
-        MenuItem newItem = new MenuItem("New Route");
-        fileMenu.getItems().add(newItem);
+    MenuItem newItem = new MenuItem("New Route");
+    fileMenu.getItems().add(newItem);
 
-        MenuItem saveItem = new MenuItem("Save Route");
-        fileMenu.getItems().add(saveItem);
+    MenuItem saveItem = new MenuItem("Save Route");
+    fileMenu.getItems().add(saveItem);
 
-        MenuItem loadItem = new MenuItem("Load Route");
-        fileMenu.getItems().add(loadItem);
+    MenuItem loadItem = new MenuItem("Load Route");
+    fileMenu.getItems().add(loadItem);
 
-        MenuItem exitItem = new MenuItem("Exit");
-        fileMenu.getItems().add(exitItem);
+    MenuItem exitItem = new MenuItem("Exit");
+    fileMenu.getItems().add(exitItem);
 
-        root.setTop(menuBar);
-        
-        listView = new ListView<>();
-        listView.setPrefWidth(150);
-        ObservableList<String> nodeList = FXCollections.observableArrayList(graph.getNodes());
-        FXCollections.sort(nodeList);
-        listView.setItems(nodeList);
-        
-        FlowPane nodeControls = new FlowPane();
-        // nodeControls.setAlignment(Pos.CENTER);
-        nodeControls.setPadding(new Insets(5));
-        nodeControls.setHgap(5);
+    root.setTop(menuBar);
 
-        searchField = new TextField();
-        Button searchButton = new Button("Search");
-        addButton = new Button("Add Node");
-        addButton.setOnAction(new AddHandler());
-        Button deleteButton = new Button("Delete Node");
-        nodeControls.getChildren().addAll(searchField, searchButton, addButton, deleteButton);
+    listView = new ListView<>();
+    listView.setPrefWidth(150);
+    ObservableList<String> nodeList = FXCollections.observableArrayList(graph.getNodes());
+    FXCollections.sort(nodeList);
+    listView.setItems(nodeList);
 
-        nodeArea = new Pane();
-        nodeArea.getChildren().add(nodeControls);
-        
-        root.setLeft(listView);
-        root.setCenter(nodeArea);
-        // root.setCenter(nodeControls);
-        Scene scene = new Scene(root, 640, 480);
-        stage.setScene(scene);
-        stage.show();
-    }
+    FlowPane nodeControls = new FlowPane();
+    // nodeControls.setAlignment(Pos.CENTER);
+    nodeControls.setPadding(new Insets(5));
+    nodeControls.setHgap(5);
 
-    public static void main(String[] args) {
-        launch(args);
-    }
+    searchField = new TextField();
+    Button searchButton = new Button("Search");
+    addButton = new Button("Add Node");
+    addButton.setOnAction(new AddHandler());
+    Button deleteButton = new Button("Delete Node");
+    Button addConnectionButton = new Button("Add Connection");
+    addConnectionButton.setOnAction(new AddConnectionHandler());
+    addConnectionButton.setDisable(true);
+    nodeControls.getChildren().addAll(searchField, searchButton, addButton, deleteButton, addConnectionButton);
 
-    class AddHandler implements EventHandler<ActionEvent> {
-        public void handle(ActionEvent event) {
-            nodeArea.setOnMouseClicked(new ClickHandler());
-            nodeArea.setCursor(Cursor.CROSSHAIR);
-            String word = searchField.getText();
-            graph.add(word);
-            
-            int index = Collections.binarySearch((listView.getItems()), word);
-            if (index < 0) {
-                listView.getItems().add(-index - 1, word);
+    nodeArea = new Pane();
+    nodeArea.getChildren().add(nodeControls);
+
+    root.setLeft(listView);
+    root.setCenter(nodeArea);
+    // root.setCenter(nodeControls);
+
+    listView.getSelectionModel().selectedItemProperty()
+        .addListener((ObservableValue<? extends String> observable, String oldValue, String newValue) -> {
+          System.out.println("ListView selection changed from oldValue = " + oldValue + " to newValue = " + newValue);
+          addConnectionButton.setDisable(false);
+          for (Object node : nodeArea.getChildren()) {
+            if (node instanceof Node) {
+              System.out.println(((Node) node).getNodeName());
             }
-        }
+          }
+        });
+
+    Scene scene = new Scene(root, 640, 480);
+    stage.setScene(scene);
+    stage.show();
+  }
+
+  public static void main(String[] args) {
+    launch(args);
+  }
+
+  class AddHandler implements EventHandler<ActionEvent> {
+    @Override
+    public void handle(ActionEvent event) {
+      nodeArea.setOnMouseClicked(new ClickHandler());
+      nodeArea.setCursor(Cursor.CROSSHAIR);
+      String word = searchField.getText();
+      graph.add(word);
+
+      int index = Collections.binarySearch((listView.getItems()), word);
+      if (index < 0) {
+        listView.getItems().add(-index - 1, word);
+      }
     }
+  }
 
-    class NewButtonHandler implements EventHandler<ActionEvent> {
-        public void handle(ActionEvent event) {
-            nodeArea.setOnMouseClicked(new ClickHandler());
+  class AddConnectionHandler implements EventHandler<ActionEvent> {
+    @Override
+    public void handle(ActionEvent event) {
+      Alert alert = new Alert(Alert.AlertType.INFORMATION, "Please select a second node in the list");
+      alert.showAndWait();
 
-            nodeArea.setCursor(Cursor.CROSSHAIR);
-
-            addButton.setDisable(true);
-        }
+      listView.getSelectionModel().selectedItemProperty()
+        .addListener((ObservableValue<? extends String> observable, String oldValue, String newValue) -> {
+          System.out.println("New" + getNodeByName(newValue));
+          System.out.println("Old" + getNodeByName(oldValue));
+        });
     }
-    class ClickHandler implements EventHandler<MouseEvent> {
-        public void handle(MouseEvent event) {
-            double x = event.getX();
-            double y = event.getY();
+  }
 
-            Node node = new Node(x, y, searchField.getText());
-            nodeArea.getChildren().add(node);
-
-            nodeArea.setCursor(Cursor.DEFAULT);
-
-            addButton.setDisable(false);
-            nodeArea.setOnMouseClicked(null);
+  private Node getNodeByName(String nodeName) {
+    for (Object node : nodeArea.getChildren()) {
+      if (node instanceof Node) {
+        if (((Node) node).getNodeName().equals(nodeName)) {
+          return (Node) node;
         }
+      }
     }
+    return null;
+  }
 
-    // class SaveButtonHandler implements EventHandler<ActionEvent> {
-    //     @Override
-    //     public void handle(ActionEvent event) {
-    //         try {
-    //             WritableImage image = nodeArea.snapshot(null,null);
-    //             BufferedImage bufferedImage = SwingFXUtils.fromFXImage(image, null);
-    //             ImageIO.write(bufferedImage, "png", new File("capture.png"));
-    //         } catch (IOException e) {
-    //             Alert alert = new Alert(Alert.AlertType.ERROR, "IO Error");
-    //             alert.showAndWait();
-    //         }
-    //     }
-    // }
-  
-  class NewHandler implements EventHandler<ActionEvent>{
+  class NewButtonHandler implements EventHandler<ActionEvent> {
+    @Override
+    public void handle(ActionEvent event) {
+      nodeArea.setOnMouseClicked(new ClickHandler());
+
+      nodeArea.setCursor(Cursor.CROSSHAIR);
+
+      addButton.setDisable(true);
+    }
+  }
+
+  class ClickHandler implements EventHandler<MouseEvent> {
+    public void handle(MouseEvent event) {
+      double x = event.getX();
+      double y = event.getY();
+
+      Node node = new Node(x, y, searchField.getText());
+      nodeArea.getChildren().add(node);
+
+      nodeArea.setCursor(Cursor.DEFAULT);
+
+      addButton.setDisable(false);
+      nodeArea.setOnMouseClicked(null);
+    }
+  }
+
+  // class SaveButtonHandler implements EventHandler<ActionEvent> {
+  // @Override
+  // public void handle(ActionEvent event) {
+  // try {
+  // WritableImage image = nodeArea.snapshot(null,null);
+  // BufferedImage bufferedImage = SwingFXUtils.fromFXImage(image, null);
+  // ImageIO.write(bufferedImage, "png", new File("capture.png"));
+  // } catch (IOException e) {
+  // Alert alert = new Alert(Alert.AlertType.ERROR, "IO Error");
+  // alert.showAndWait();
+  // }
+  // }
+  // }
+
+  class NewHandler implements EventHandler<ActionEvent> {
     @Override
     public void handle(ActionEvent event) {
       graph = new ListGraph<>();
       AddDefaultStations();
       // Är du säker -sak (F7 - Varning vid osparade ändringar)
-      
+
     }
   }
-  class SaveHandler implements EventHandler<ActionEvent>{
+
+  class SaveHandler implements EventHandler<ActionEvent> {
     @Override
     public void handle(ActionEvent event) {
       // F6, F9
-      // Sparas både som textfil (kan laddas up och manipuleras) och som .png (kan visas men inte manipuleras) Hittade i F14
-      //Hur ska vi göra med att välja antingen PNG eller TXT?
+      // Sparas både som textfil (kan laddas up och manipuleras) och som .png (kan
+      // visas men inte manipuleras) Hittade i F14
+      // Hur ska vi göra med att välja antingen PNG eller TXT?
       savePNG();
       saveTXT();
     }
   }
-  class LoadHandler implements EventHandler<ActionEvent>{
+
+  class LoadHandler implements EventHandler<ActionEvent> {
     @Override
     public void handle(ActionEvent event) {
       // F6, F8, F9
       // Ladda upp. Både som textfil (manipuleras) och som .png (inte manipuleras)
-      //Hur ska vi göra med att välja antingen PNG eller TXT?
+      // Hur ska vi göra med att välja antingen PNG eller TXT?
       loadTXT();
       loadPNG();
     }
   }
-  class ExitHandler implements EventHandler<ActionEvent>{
+
+  class ExitHandler implements EventHandler<ActionEvent> {
     public void handle(ActionEvent event) {
       Platform.exit();
     }
   }
+
   private void AddDefaultStations() {
     graph.add("T-Centralen");
     graph.add("Hötorget");
@@ -209,10 +248,10 @@ public class Gui extends Application {
     try {
       PrintWriter writer = new PrintWriter("route.txt");
 
-      for (String node : graph.getNodes()){
+      for (String node : graph.getNodes()) {
         writer.println("NODE:" + node);
       }
-      for (String node : graph.getNodes()){
+      for (String node : graph.getNodes()) {
         for (Edge<String> edge : graph.getEdgesFrom(node)) {
           writer.println("EDGE;" + node + ";" + edge.getDestination() + ";" + edge.getName() + ";" + edge.getWeight());
         }
@@ -224,16 +263,18 @@ public class Gui extends Application {
       alert.showAndWait();
     }
   }
+
   private void savePNG() {
     try {
-        WritableImage image = root.snapshot(null,null);
-        BufferedImage bufferedImage = SwingFXUtils.fromFXImage(image, null);
-        ImageIO.write(bufferedImage, "png", new File("route.png"));
-      } catch (IOException e) {
-        Alert alert = new Alert(Alert.AlertType.ERROR,"Could not save PNG");
-        alert.showAndWait();
-      }
+      WritableImage image = root.snapshot(null, null);
+      BufferedImage bufferedImage = SwingFXUtils.fromFXImage(image, null);
+      ImageIO.write(bufferedImage, "png", new File("route.png"));
+    } catch (IOException e) {
+      Alert alert = new Alert(Alert.AlertType.ERROR, "Could not save PNG");
+      alert.showAndWait();
+    }
   }
+
   private void loadTXT() {
     try {
       graph = new ListGraph<>();
@@ -246,8 +287,7 @@ public class Gui extends Application {
         if (line.startsWith("NODE:")) {
           String node = line.substring(5);
           graph.add(node);
-        }
-        else if (parts[0].equals("EDGE:")) {
+        } else if (parts[0].equals("EDGE:")) {
           edgeList.add(parts);
         }
       }
@@ -263,6 +303,7 @@ public class Gui extends Application {
       alert.showAndWait();
     }
   }
+
   private void loadPNG() {
     try {
       Image image = new Image(new File("route.png").toURI().toString());
@@ -274,5 +315,3 @@ public class Gui extends Application {
     }
   }
 }
-
-
