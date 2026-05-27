@@ -5,6 +5,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Optional;
+import java.util.Scanner;
 
 import javax.imageio.ImageIO;
 
@@ -109,11 +114,7 @@ public class Gui extends Application {
           }
         });
 
-    Scene scene = new Scene(root, 640, 480);
-    stage.setScene(scene);
-    stage.show();
-  }
-        nodeArea = new Pane();
+    nodeArea = new Pane();
         nodeArea.getChildren().add(nodeControls);
         
         root.setLeft(listView);
@@ -128,8 +129,9 @@ public class Gui extends Application {
           }
         });
 
-        stage.show();
-    }
+    stage.setScene(scene);
+    stage.show();
+  }
 
   public static void main(String[] args) {
     launch(args);
