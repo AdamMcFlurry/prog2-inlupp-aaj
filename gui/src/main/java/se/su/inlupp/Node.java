@@ -18,7 +18,7 @@ import javafx.scene.text.Text;
 public class Node extends BorderPane {
     private double startX, startY;
     private final String nodeName;
-    Circle nodeCircle;
+    private Circle nodeCircle;
     
     public Node(double x, double y, String nodeName) {
         relocate(x, y);
@@ -61,6 +61,10 @@ public class Node extends BorderPane {
                 nodeCircle.setFill(Color.YELLOW);
             }
         });
+    }
+
+    public Circle getCircle() {
+        return nodeCircle;
     }
 
     public String getNodeName() {

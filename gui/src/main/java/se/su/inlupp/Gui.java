@@ -15,8 +15,6 @@ import javax.imageio.ImageIO;
 
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -41,9 +39,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.Pane;
-import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
-import javafx.scene.shape.StrokeLineCap;
 import javafx.stage.Stage;
 
 public class Gui extends Application {
@@ -112,7 +108,7 @@ public class Gui extends Application {
         .addListener((ObservableValue<? extends String> observable, String oldValue, String newValue) -> {
           addConnectionButton.setDisable(false);
         });
-
+    
     nodeArea = new Pane();
     nodeArea.getChildren().add(nodeControls);
 
@@ -154,14 +150,16 @@ public class Gui extends Application {
       listView.getSelectionModel().selectedItemProperty()
           .addListener((ObservableValue<? extends String> observable, String oldValue, String newValue) -> {
             graph.connect(oldValue, newValue, (oldValue + " till " + newValue), 0);
-            Line newLine = new BoundLine(new SimpleDoubleProperty(getNodeByName(oldValue).getX() + 20),
-                new SimpleDoubleProperty(getNodeByName(oldValue).getY() + 40),
-                new SimpleDoubleProperty(getNodeByName(newValue).getX() + 20),
-                new SimpleDoubleProperty(getNodeByName(newValue).getY() + 40));
-            // newLine.setStartX(getNodeByName(oldValue).getX() + 20);
-            // newLine.setStartY(getNodeByName(oldValue).getY() + 40);
-            // newLine.setEndX(getNodeByName(newValue).getX() + 20);
-            // newLine.setEndY(getNodeByName(newValue).getY() + 40);
+            
+            Line newLine = new Line();
+            newLine.setStartX(getNodeByName(oldValue).getX());
+            newLine.setStartY(getNodeByName(oldValue).getY());
+            newLine.setEndX(getNodeByName(newValue).getX());
+            newLine.setEndY(getNodeByName(newValue).getY());
+            newLine.startXProperty().bind(getNodeByName(oldValue).layoutXProperty());
+            newLine.startYProperty().bind(getNodeByName(oldValue).layoutYProperty());
+            newLine.endXProperty().bind(getNodeByName(newValue).layoutXProperty());
+            newLine.endYProperty().bind(getNodeByName(newValue).layoutYProperty());
             nodeArea.getChildren().add(newLine);
           });
     }
@@ -176,21 +174,6 @@ public class Gui extends Application {
       }
     }
     return null;
-  }
-
-  // kopierad
-  class BoundLine extends Line {
-    BoundLine(DoubleProperty startX, DoubleProperty startY, DoubleProperty endX, DoubleProperty endY) {
-      startXProperty().bind(startX);
-      startYProperty().bind(startY);
-      endXProperty().bind(endX);
-      endYProperty().bind(endY);
-      setStrokeWidth(2);
-      setStroke(Color.GRAY.deriveColor(0, 1, 1, 0.5));
-      setStrokeLineCap(StrokeLineCap.BUTT);
-      getStrokeDashArray().setAll(10.0, 5.0);
-      setMouseTransparent(true);
-    }
   }
 
   class NewButtonHandler implements EventHandler<ActionEvent> {
