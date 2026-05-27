@@ -63,6 +63,7 @@ public class Gui extends Application {
   private TextField input1;
   private TextField input2;
   private final ArrayList<GuiEdgeLine> lineList = new ArrayList<>();
+  private FlowPane nodeControls;
 
   @Override
   public void start(Stage stage) {
@@ -124,7 +125,7 @@ public class Gui extends Application {
     FXCollections.sort(nodeList);
     listView.setItems(nodeList);
 
-    FlowPane nodeControls = new FlowPane();
+    nodeControls = new FlowPane();
     // nodeControls.setAlignment(Pos.CENTER);
     nodeControls.setPadding(new Insets(5));
     nodeControls.setHgap(5);
