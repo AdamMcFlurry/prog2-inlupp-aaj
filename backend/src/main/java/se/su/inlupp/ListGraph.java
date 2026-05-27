@@ -38,10 +38,8 @@ public class ListGraph<T> implements Graph<T> {
   public void connect(T node1, T node2, String name, int weight) throws NoSuchElementException, IllegalArgumentException, IllegalStateException {
     if (!hasNode(node1) || !hasNode(node2)) throw new NoSuchElementException();
     if (weight < 0) throw new IllegalArgumentException();
+    if (node1.equals(node2)) throw new IllegalArgumentException();
     if (getEdgeBetween(node1, node2) != null) throw new IllegalStateException();
-
-    this.add(node1);
-    this.add(node2);
 
     Set<Edge<T>> node1Edges = nodeEdgeMap.get(node1);
     Set<Edge<T>> node2Edges = nodeEdgeMap.get(node2);
@@ -71,13 +69,13 @@ public class ListGraph<T> implements Graph<T> {
 
   @Override
   public Set<T> getNodes() {
-    return nodeEdgeMap.keySet();
+    return new HashSet<>(nodeEdgeMap.keySet());
   }
 
   @Override
   public Collection<Edge<T>> getEdgesFrom(T node) throws NoSuchElementException {
     if (nodeEdgeMap.get(node) == null) throw new NoSuchElementException();
-    else return nodeEdgeMap.get(node);
+    else return new HashSet<>(nodeEdgeMap.get(node));
   }
 
   @Override
@@ -102,13 +100,13 @@ public class ListGraph<T> implements Graph<T> {
   @Override
   public String toString() {
     Iterator<T> it = iterator();
-    StringBuilder sB = new StringBuilder(); 
+    StringBuilder sB = new StringBuilder();
     while (it.hasNext()) {
       T nextNode = it.next();
       sB.append(nextNode);
       for (Edge<T> edge : getEdgesFrom(nextNode)) {
         sB.append(edge.toString() + "\n");
-      }       
+      }
     }
     return sB.toString();
   }

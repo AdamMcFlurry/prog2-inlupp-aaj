@@ -19,10 +19,7 @@ public class DFSPathFinder<T> implements PathFinder<T> {
 
     while (current != null && !current.equals(from) && connections.containsKey(to)) {
       T next = connections.get(current);
-      System.out.println("n" + next);
-      System.out.println("c" + current);
       Edge<T> edge = graph.getEdgeBetween(next, current);
-      System.out.println("e" + edge.toString());
       edges.add(edge);
       current = next;
     }
