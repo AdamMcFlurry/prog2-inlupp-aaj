@@ -44,6 +44,7 @@ import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.shape.Line;
 import javafx.stage.Stage;
+import se.su.inlupp.Gui.ClickHandler;
 
 public class Gui extends Application {
 
@@ -56,6 +57,9 @@ public class Gui extends Application {
   // private Button addConnectionButton;
   private String imagePath;
   private boolean unsavedChanges = false;
+  private TextField input1;
+  private TextField input2;
+  private final List<GuiEdgeLine> lineList = new ArrayList<>();
 
   @Override
   public void start(Stage stage) {
@@ -84,17 +88,20 @@ public class Gui extends Application {
 
     FlowPane frånTill = new FlowPane(); // ARFkod
 
-    TextField input1 = new TextField();
+    input1 = new TextField();
     input1.setPromptText("Startnod");
     input1.setStyle("-fx-border-color: black");
 
-    TextField input2 = new TextField();
+    input2 = new TextField();
     input2.setPromptText("Slutnod");
     input2.setStyle("-fx-border-color: black");
 
+    Button findPathButton = new Button("Find Path");
+    findPathButton.setOnAction(new FindPathHandler());
+
     Label pil = new Label(" --> ");
 
-    frånTill.getChildren().addAll(input1, pil, input2);
+    frånTill.getChildren().addAll(input1, pil, input2, findPathButton);
     frånTill.setAlignment(Pos.TOP_RIGHT);
 
     VBox frånTillBox = new VBox();
@@ -177,13 +184,14 @@ public class Gui extends Application {
           .addListener((ObservableValue<? extends String> observable, String oldValue, String newValue) -> {
             graph.connect(oldValue, newValue, (oldValue + " till " + newValue), 0);
 
-            createNewLine(getNodeByName(oldValue), getNodeByName(newValue));
+            createNewLine(getNodeByName(oldValue), getNodeByName(newValue), graph.getEdgeBetween(oldValue, newValue));
           });
     }
   }
 
-  private void createNewLine(Node node1, Node node2) {
-    Line newLine = new Line();
+  private void createNewLine(Node node1, Node node2, Edge<String> edge) {
+    GuiEdgeLine newLine = new GuiEdgeLine(edge);
+    lineList.add(newLine);
     newLine.setStartX(node1.getX());
     newLine.setStartY(node1.getY());
     newLine.setEndX(node2.getX());
@@ -193,6 +201,16 @@ public class Gui extends Application {
     newLine.endXProperty().bind(node2.layoutXProperty());
     newLine.endYProperty().bind(node2.layoutYProperty());
     nodeArea.getChildren().add(newLine);
+  }
+
+  private class GuiEdgeLine extends Line {
+    private final Edge<String> lineEdge;
+    public GuiEdgeLine(Edge<String> lineEdge) {
+      this.lineEdge = lineEdge;
+    }
+    public Edge<String> getLineEdge() {
+      return lineEdge;
+    }
   }
 
   private Node getNodeByName(String nodeName) {
@@ -214,6 +232,22 @@ public class Gui extends Application {
       nodeArea.setCursor(Cursor.CROSSHAIR);
 
       addButton.setDisable(true);
+    }
+  }
+
+  class FindPathHandler implements EventHandler<ActionEvent> {
+    @Override
+    public void handle(ActionEvent event) {
+      PathFinder<String> bfsPathFinder = new BFSPathFinder<>();
+      Path<String> path = bfsPathFinder.findPath(graph, input1.getText(), input2.getText());
+
+      for (Edge<String> edge : path.getEdges()) {
+        for (GuiEdgeLine edgeLine : lineList) {
+          if (edgeLine.getLineEdge().equals(edge)) {
+            edgeLine.setStyle("-fx-stroke: red;");
+          }
+        }
+      }
     }
   }
 
