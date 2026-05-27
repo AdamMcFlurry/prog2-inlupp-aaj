@@ -17,14 +17,14 @@ import javafx.scene.text.Text;
 
 public class Node extends BorderPane {
     private double startX, startY;
-    private String nodeName;
-    private Set<ListEdge<Node>> nodeEdgeSet = new HashSet<>(); 
+    private final String nodeName;
+    Circle nodeCircle;
     
     public Node(double x, double y, String nodeName) {
         relocate(x, y);
         this.nodeName = nodeName;
         VBox titlebar = new VBox();
-        Circle nodeCircle = new Circle();
+        nodeCircle = new Circle();
         nodeCircle.setFill(Color.YELLOW);
         nodeCircle.setCenterX(10);
         nodeCircle.setCenterY(10);
@@ -65,6 +65,14 @@ public class Node extends BorderPane {
 
     public String getNodeName() {
         return this.nodeName;
+    }
+
+    public double getX() {
+        return getLayoutX();
+    }
+
+    public double getY() {
+        return getLayoutY();
     }
 
     class StartDragHandler implements EventHandler<MouseEvent> {

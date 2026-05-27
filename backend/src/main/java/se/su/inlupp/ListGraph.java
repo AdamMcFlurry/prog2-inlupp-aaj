@@ -44,8 +44,8 @@ public class ListGraph<T> implements Graph<T> {
     Set<Edge<T>> node1Edges = nodeEdgeMap.get(node1);
     Set<Edge<T>> node2Edges = nodeEdgeMap.get(node2);
 
-    node1Edges.add(new ListEdge<T>(node2, name, weight));
-    node2Edges.add(new ListEdge<T>(node1, name, weight));
+    node1Edges.add(new ListEdge<>(node2, name, weight));
+    node2Edges.add(new ListEdge<>(node1, name, weight));
   }
 
   @Override

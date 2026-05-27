@@ -15,6 +15,8 @@ import javax.imageio.ImageIO;
 
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -39,6 +41,9 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.Pane;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Line;
+import javafx.scene.shape.StrokeLineCap;
 import javafx.stage.Stage;
 
 public class Gui extends Application {
@@ -50,8 +55,8 @@ public class Gui extends Application {
   private Button addButton;
   private BorderPane root;
   // private Button addConnectionButton;
-    private String imagePath;
-    private boolean unsavedChanges = false;
+  private String imagePath;
+  private boolean unsavedChanges = false;
 
   @Override
   public void start(Stage stage) {
@@ -90,7 +95,7 @@ public class Gui extends Application {
     addButton = new Button("Add Node");
     addButton.setOnAction(new AddHandler());
     Button deleteButton = new Button("Delete Node");
-        deleteButton.setOnAction(new DeleteHandler());
+    deleteButton.setOnAction(new DeleteHandler());
     Button addConnectionButton = new Button("Add Connection");
     addConnectionButton.setOnAction(new AddConnectionHandler());
     addConnectionButton.setDisable(true);
@@ -105,29 +110,23 @@ public class Gui extends Application {
 
     listView.getSelectionModel().selectedItemProperty()
         .addListener((ObservableValue<? extends String> observable, String oldValue, String newValue) -> {
-          System.out.println("ListView selection changed from oldValue = " + oldValue + " to newValue = " + newValue);
           addConnectionButton.setDisable(false);
-          for (Object node : nodeArea.getChildren()) {
-            if (node instanceof Node) {
-              System.out.println(((Node) node).getNodeName());
-            }
-          }
         });
 
     nodeArea = new Pane();
-        nodeArea.getChildren().add(nodeControls);
-        
-        root.setLeft(listView);
-        root.setCenter(nodeArea);
-        // root.setCenter(nodeControls);
-        Scene scene = new Scene(root, 640, 480);
-        stage.setScene(scene);
-        
-        stage.setOnCloseRequest(event -> {
-          if (!confirmUnsavedChanges()) {
-            event.consume();
-          }
-        });
+    nodeArea.getChildren().add(nodeControls);
+
+    root.setLeft(listView);
+    root.setCenter(nodeArea);
+    // root.setCenter(nodeControls);
+    Scene scene = new Scene(root, 740, 580);
+    stage.setScene(scene);
+
+    stage.setOnCloseRequest(event -> {
+      if (!confirmUnsavedChanges()) {
+        event.consume();
+      }
+    });
 
     stage.setScene(scene);
     stage.show();
@@ -142,14 +141,7 @@ public class Gui extends Application {
     public void handle(ActionEvent event) {
       nodeArea.setOnMouseClicked(new ClickHandler());
       nodeArea.setCursor(Cursor.CROSSHAIR);
-      String word = searchField.getText();
-      graph.add(word);
-            unsavedChanges = true;
-
-      int index = Collections.binarySearch((listView.getItems()), word);
-      if (index < 0) {
-        listView.getItems().add(-index - 1, word);
-      }
+      unsavedChanges = true;
     }
   }
 
@@ -160,10 +152,18 @@ public class Gui extends Application {
       alert.showAndWait();
 
       listView.getSelectionModel().selectedItemProperty()
-        .addListener((ObservableValue<? extends String> observable, String oldValue, String newValue) -> {
-          System.out.println("New" + getNodeByName(newValue));
-          System.out.println("Old" + getNodeByName(oldValue));
-        });
+          .addListener((ObservableValue<? extends String> observable, String oldValue, String newValue) -> {
+            graph.connect(oldValue, newValue, (oldValue + " till " + newValue), 0);
+            Line newLine = new BoundLine(new SimpleDoubleProperty(getNodeByName(oldValue).getX() + 20),
+                new SimpleDoubleProperty(getNodeByName(oldValue).getY() + 40),
+                new SimpleDoubleProperty(getNodeByName(newValue).getX() + 20),
+                new SimpleDoubleProperty(getNodeByName(newValue).getY() + 40));
+            // newLine.setStartX(getNodeByName(oldValue).getX() + 20);
+            // newLine.setStartY(getNodeByName(oldValue).getY() + 40);
+            // newLine.setEndX(getNodeByName(newValue).getX() + 20);
+            // newLine.setEndY(getNodeByName(newValue).getY() + 40);
+            nodeArea.getChildren().add(newLine);
+          });
     }
   }
 
@@ -176,6 +176,21 @@ public class Gui extends Application {
       }
     }
     return null;
+  }
+
+  // kopierad
+  class BoundLine extends Line {
+    BoundLine(DoubleProperty startX, DoubleProperty startY, DoubleProperty endX, DoubleProperty endY) {
+      startXProperty().bind(startX);
+      startYProperty().bind(startY);
+      endXProperty().bind(endX);
+      endYProperty().bind(endY);
+      setStrokeWidth(2);
+      setStroke(Color.GRAY.deriveColor(0, 1, 1, 0.5));
+      setStrokeLineCap(StrokeLineCap.BUTT);
+      getStrokeDashArray().setAll(10.0, 5.0);
+      setMouseTransparent(true);
+    }
   }
 
   class NewButtonHandler implements EventHandler<ActionEvent> {
@@ -194,35 +209,45 @@ public class Gui extends Application {
       double x = event.getX();
       double y = event.getY();
 
+      String word = searchField.getText();
+      graph.add(word);
+
+      int index = Collections.binarySearch((listView.getItems()), word);
+      if (index < 0) {
+        listView.getItems().add(-index - 1, word);
+      }
+
       Node node = new Node(x, y, searchField.getText());
       nodeArea.getChildren().add(node);
 
       nodeArea.setCursor(Cursor.DEFAULT);
 
-            addButton.setDisable(false);
-            nodeArea.setOnMouseClicked(null);
-        }
+      addButton.setDisable(false);
+      nodeArea.setOnMouseClicked(null);
     }
-    class DeleteHandler implements EventHandler<ActionEvent> {
-      public void handle(ActionEvent event){
-        String selectedNode = listView.getSelectionModel().getSelectedItem();
+  }
 
-        if (selectedNode == null) {
-          Alert alert = new Alert(Alert.AlertType.ERROR,"No node selected.");
-          alert.showAndWait();
-          return;
-        }
-        try {
-          graph.remove(selectedNode);
-          listView.getItems().remove(selectedNode);
-          unsavedChanges = true;
+  class DeleteHandler implements EventHandler<ActionEvent> {
+    public void handle(ActionEvent event) {
+      String selectedNode = listView.getSelectionModel().getSelectedItem();
 
-        } catch (NoSuchElementException e){
-          Alert alert = new Alert(Alert.AlertType.ERROR,"Node does not exist.");
-          alert.showAndWait();
-        }
+      if (selectedNode == null) {
+        Alert alert = new Alert(Alert.AlertType.ERROR, "No node selected.");
+        alert.showAndWait();
+        return;
+      }
+      try {
+        graph.remove(selectedNode);
+        listView.getItems().remove(selectedNode);
+        nodeArea.getChildren().remove(getNodeByName(selectedNode));
+        unsavedChanges = true;
+
+      } catch (NoSuchElementException e) {
+        Alert alert = new Alert(Alert.AlertType.ERROR, "Node does not exist.");
+        alert.showAndWait();
       }
     }
+  }
 
   // class SaveButtonHandler implements EventHandler<ActionEvent> {
   // @Override
@@ -264,8 +289,8 @@ public class Gui extends Application {
     public void handle(ActionEvent event) {
       // F6, F8, F9
       // Ladda upp. Både som textfil (manipuleras) och som .png (inte manipuleras)
-      //Hur ska vi göra med att välja antingen PNG eller TXT?
-      if (confirmUnsavedChanges()){
+      // Hur ska vi göra med att välja antingen PNG eller TXT?
+      if (confirmUnsavedChanges()) {
         loadTXT();
         loadPNG();
       }
@@ -274,10 +299,10 @@ public class Gui extends Application {
 
   class ExitHandler implements EventHandler<ActionEvent> {
     public void handle(ActionEvent event) {
-      if (confirmUnsavedChanges()){
+      if (confirmUnsavedChanges()) {
         Platform.exit();
       }
-      }
+    }
   }
 
   private void AddDefaultStations() {
@@ -294,7 +319,7 @@ public class Gui extends Application {
 
       writer.println("IMAGE:" + imagePath);
 
-      for (String node : graph.getNodes()){
+      for (String node : graph.getNodes()) {
         writer.println("NODE:" + node);
       }
       for (String node : graph.getNodes()) {
@@ -315,18 +340,18 @@ public class Gui extends Application {
 
   private void savePNG() {
     try {
-        File file = new File("route.png");
-        WritableImage image = root.snapshot(null,null);
-        BufferedImage bufferedImage = SwingFXUtils.fromFXImage(image, null);
-        ImageIO.write(bufferedImage, "png", file);
+      File file = new File("route.png");
+      WritableImage image = root.snapshot(null, null);
+      BufferedImage bufferedImage = SwingFXUtils.fromFXImage(image, null);
+      ImageIO.write(bufferedImage, "png", file);
 
-        imagePath = file.getAbsolutePath();
-        unsavedChanges = false;
-      } catch (IOException e) {
-        Alert alert = new Alert(Alert.AlertType.ERROR,"Could not save PNG");
-        alert.showAndWait();
-        unsavedChanges = true;
-      }
+      imagePath = file.getAbsolutePath();
+      unsavedChanges = false;
+    } catch (IOException e) {
+      Alert alert = new Alert(Alert.AlertType.ERROR, "Could not save PNG");
+      alert.showAndWait();
+      unsavedChanges = true;
+    }
   }
 
   private void loadTXT() {
@@ -344,8 +369,7 @@ public class Gui extends Application {
           Image image = new Image(new File(imagePath).toURI().toString());
           ImageView imageView = new ImageView(image);
           root.setCenter(imageView);
-        }
-        else if (line.startsWith("NODE:")) {
+        } else if (line.startsWith("NODE:")) {
           String node = line.substring(5);
           graph.add(node);
         } else if (parts[0].equals("EDGE:")) {
@@ -375,7 +399,8 @@ public class Gui extends Application {
       alert.showAndWait();
     }
   }
-  private boolean confirmUnsavedChanges(){
+
+  private boolean confirmUnsavedChanges() {
     if (!unsavedChanges) {
       return true;
     }
@@ -389,5 +414,3 @@ public class Gui extends Application {
     return result.isPresent() && result.get() == ButtonType.OK;
   }
 }
-
-
