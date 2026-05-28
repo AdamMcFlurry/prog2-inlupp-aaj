@@ -209,20 +209,7 @@ public class Gui extends Application {
 
   private void saveTXT() {
     try {
-      PrintWriter writer = new PrintWriter("route.txt");
-
-      writer.println("IMAGE:" + imagePath);
-
-      for (String node : graph.getNodes()) {
-        Node visualNode = getNodeByName(node);
-        writer.println("NODE:" + node + ":" + visualNode.getLayoutX() + ":" + visualNode.getLayoutY());
-      }
-      for (String node : graph.getNodes()) {
-        for (Edge<String> edge : graph.getEdgesFrom(node)) {
-          writer.println("EDGE:" + node + ":" + edge.getDestination() + ":" + edge.getName() + ":" + edge.getWeight());
-        }
-      }
-      writer.close();
+      RouteFileManager.saveTXT(graph, nodeArea, imagePath);
       unsavedChanges = false;
 
     } catch (Exception e) {
@@ -235,12 +222,8 @@ public class Gui extends Application {
 
   private void savePNG() {
     try {
-      File file = new File("route.png");
-      WritableImage image = nodeArea.snapshot(null, null);
-      BufferedImage bufferedImage = SwingFXUtils.fromFXImage(image, null);
-      ImageIO.write(bufferedImage, "png", file);
+      RouteFileManager.savePNG(nodeArea);
 
-      imagePath = file.getAbsolutePath();
       unsavedChanges = false;
     } catch (IOException e) {
       Alert alert = new Alert(Alert.AlertType.ERROR, "Could not save PNG");
@@ -252,51 +235,17 @@ public class Gui extends Application {
   private void loadTXT() {
     try {
       graph = new ListGraph<>();
-      nodeArea.getChildren().clear();
-      nodeArea.getChildren().add(nodeControls);
-      FileReader fileReader = new FileReader("route.txt");
-      BufferedReader reader = new BufferedReader(fileReader);
-      List<String[]> edgeList = new ArrayList<>();
+      String[] imagePathHolder = {imagePath};
 
-      String line;
+      RouteFileManager.loadTXT(graph, nodeArea, nodeControls, imagePathHolder);
+      imagePath = imagePathHolder[0];
 
-      while ((line = reader.readLine()) != null) {
-        if (line.startsWith("IMAGE:")) {
-          imagePath = line.substring(6);
-        } else if (line.startsWith("NODE:")) {
-          String[] parts = line.split(":");
-          String nodeName = parts[1];
-          double x = Double.parseDouble(parts[2]);
-          double y = Double.parseDouble(parts[3]);
-          graph.add(nodeName);
-          Node visualNode = new Node(x, y, nodeName);
-          nodeArea.getChildren().add(visualNode);
-        } else if (line.startsWith("EDGE:")) {
-          String[] parts = line.split(":");
-          edgeList.add(parts);
-        }
-      }
-      reader.close();
-      fileReader.close();
-      for (String[] edge : edgeList) {
-        String from = edge[1];
-        String to = edge[2];
-        String name = edge[3];
-        int weight = Integer.parseInt(edge[4]);
+      ObservableList<String> updatedList = FXCollections.observableArrayList(graph.getNodes());
+      FXCollections.sort(updatedList);
+      listView.setItems(updatedList);
 
-        graph.connect(from, to, name, weight);
-
-        Node startNode = getNodeByName(from);
-        Node endNode = getNodeByName(to);
-
-        Edge<String> guiEdge = graph.getEdgeBetween(from, to);
-        GuiEdgeLine newLine = GuiEdgeLine.createNewLine(startNode, endNode, guiEdge);
-        nodeArea.getChildren().add(newLine);
-
-        ObservableList<String> updatedList = FXCollections.observableArrayList(graph.getNodes());
-        FXCollections.sort(updatedList);
-        listView.setItems(updatedList);
-      }
+      unsavedChanges = false;
+      
     } catch (FileNotFoundException e) {
       Alert alert = new Alert(Alert.AlertType.ERROR, "route.txt not found");
       alert.showAndWait();
@@ -312,16 +261,9 @@ public class Gui extends Application {
   private void loadPNG() {
     try {
       if (imagePath == null || imagePath.isEmpty()) {
-        Alert alert = new Alert(Alert.AlertType.ERROR, "No image path saved.");
-        alert.showAndWait();
         return;
       }
       File file = new File(imagePath);
-      if (!file.exists()) {
-        Alert alert = new Alert(Alert.AlertType.ERROR, "Image file not found.");
-        alert.showAndWait();
-        return;
-      }
       Image image = new Image(file.toURI().toString());
       ImageView imageView = new ImageView(image);
       imageView.setPreserveRatio(true);
