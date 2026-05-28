@@ -5,7 +5,7 @@ import javafx.scene.shape.Line;
 public class GuiLine extends Line {
     private final Edge<String> lineEdge;
 
-    public GuiLine(Node node1, Node node2, Edge<String> lineEdge) {
+    public GuiLine(GuiNode node1, GuiNode node2, Edge<String> lineEdge) {
       this.lineEdge = lineEdge;
     
       setStartX(node1.getLayoutX());
@@ -16,7 +16,6 @@ public class GuiLine extends Line {
       startYProperty().bind(node1.layoutYProperty());
       endXProperty().bind(node2.layoutXProperty());
       endYProperty().bind(node2.layoutYProperty());
-
     }
 
     public Edge<String> getLineEdge() {

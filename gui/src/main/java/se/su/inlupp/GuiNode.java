@@ -8,7 +8,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.text.Text;
 
-public class Node extends BorderPane {
+public class GuiNode extends BorderPane {
     private final int GUI_NODE_XCOR = 10;
     private final int GUI_NODE_YCOR = 10;
     private final int GUI_NODE_RAD = 20;
@@ -17,7 +17,7 @@ public class Node extends BorderPane {
     private double startX, startY;
     private final String nodeName;
 
-    public Node(double x, double y, String nodeName) {
+    public GuiNode(double x, double y, String nodeName) {
         relocate(x, y);
         this.nodeName = nodeName;
 

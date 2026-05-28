@@ -69,6 +69,7 @@ public class Gui extends Application {
   private ImageView backgroundImageView;
 
   private Map<Edge<String>, GuiLine> edgeGuiLineMap = new HashMap<>();
+  private Map<String, GuiNode> nodeMap = new HashMap<>();
 
   @Override
   public void start(Stage stage) {
@@ -196,20 +197,9 @@ public class Gui extends Application {
     launch(args);
   }
 
-  private Node getNodeByName(String nodeName) {
-    for (Object node : nodeArea.getChildren()) {
-      if (node instanceof Node) {
-        if (((Node) node).getNodeName().equals(nodeName)) {
-          return (Node) node;
-        }
-      }
-    }
-    return null;
-  }
-
   private void saveTXT() {
     try {
-      RouteFileManager.saveTXT(graph, nodeArea, imagePath);
+      RouteFileManager.saveTXT(graph, nodeMap, imagePath);
       unsavedChanges = false;
 
     } catch (Exception e) {
@@ -237,7 +227,7 @@ public class Gui extends Application {
       graph = new ListGraph<>();
       String[] imagePathHolder = { imagePath };
 
-      RouteFileManager.loadTXT(graph, nodeArea, nodeControls, imagePathHolder);
+      RouteFileManager.loadTXT(graph, nodeArea, nodeMap, nodeControls, imagePathHolder);
       imagePath = imagePathHolder[0];
 
       ObservableList<String> updatedList = FXCollections.observableArrayList(graph.getNodes());
@@ -328,7 +318,7 @@ public class Gui extends Application {
       if (result.isPresent()) {
         graph.connect(node1, node2, (node1 + " till " + node2), Integer.parseInt(result.get()));
         Edge<String> edgeBetween = graph.getEdgeBetween(node1, node2);
-        GuiLine newLine = new GuiLine(getNodeByName(node1), getNodeByName(node2), edgeBetween);
+        GuiLine newLine = new GuiLine(nodeMap.get(node1), nodeMap.get(node2), edgeBetween);
         edgeGuiLineMap.put(edgeBetween, newLine);
         nodeArea.getChildren().add(newLine);
       }
@@ -405,15 +395,16 @@ public class Gui extends Application {
       double x = event.getX();
       double y = event.getY();
 
-      String word = searchField.getText();
-      graph.add(word);
+      String nodeName = searchField.getText();
+      graph.add(nodeName);
 
-      int index = Collections.binarySearch((listView.getItems()), word);
+      int index = Collections.binarySearch((listView.getItems()), nodeName);
       if (index < 0) {
-        listView.getItems().add(-index - 1, word);
+        listView.getItems().add(-index - 1, nodeName);
       }
 
-      Node node = new Node(x, y, searchField.getText());
+      GuiNode node = new GuiNode(x, y, nodeName);
+      nodeMap.put(nodeName, node);
       searchField.clear();
       nodeArea.getChildren().add(node);
 
@@ -443,7 +434,7 @@ public class Gui extends Application {
 
           graph.remove(selectedNode);
           listView.getItems().remove(selectedNode);
-          nodeArea.getChildren().remove(getNodeByName(selectedNode));
+          nodeArea.getChildren().remove(nodeMap.get(selectedNode));
 
           unsavedChanges = true;
 

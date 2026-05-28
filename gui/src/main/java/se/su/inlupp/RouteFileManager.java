@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import javax.imageio.ImageIO;
 
@@ -19,18 +20,15 @@ import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.Pane;
 
 public class RouteFileManager {
-    private RouteFileManager() {
+    private RouteFileManager() {}
 
-    }
-    
-
-    public static void saveTXT(Graph<String> graph, Pane nodeArea, String imagePath) throws IOException {
+    public static void saveTXT(Graph<String> graph, Map<String, GuiNode> nodeMap, String imagePath) throws IOException {
         PrintWriter writer = new PrintWriter("route.txt");
 
         writer.println("IMAGE:" + imagePath);
 
         for (String node : graph.getNodes()) {
-            Node visualNode = getNodeByName(nodeArea, node);
+            GuiNode visualNode = nodeMap.get(node);
             writer.println("NODE:" + node + ":" + visualNode.getLayoutX() + ":" + visualNode.getLayoutY());
         }
         for (String node : graph.getNodes()) {
@@ -42,7 +40,7 @@ public class RouteFileManager {
         writer.close();
     }
 
-    public static void loadTXT(Graph<String> graph, Pane nodeArea, FlowPane nodeControls, String[] imagePathHolder)
+    public static void loadTXT(Graph<String> graph, Pane nodeArea, Map<String, GuiNode> nodeMap, FlowPane nodeControls, String[] imagePathHolder)
             throws IOException {
         nodeArea.getChildren().clear();
         nodeArea.getChildren().add(nodeControls);
@@ -61,7 +59,7 @@ public class RouteFileManager {
                 double x = Double.parseDouble(parts[2]);
                 double y = Double.parseDouble(parts[3]);
                 graph.add(nodeName);
-                Node visualNode = new Node(x, y, nodeName);
+                GuiNode visualNode = new GuiNode(x, y, nodeName);
                 nodeArea.getChildren().add(visualNode);
             } else if (line.startsWith("EDGE:")) {
                 String[] parts = line.split(":");
@@ -78,8 +76,8 @@ public class RouteFileManager {
 
             graph.connect(from, to, name, weight);
 
-            Node startNode = getNodeByName(nodeArea, from);
-            Node endNode = getNodeByName(nodeArea, to);
+            GuiNode startNode = nodeMap.get(from);
+            GuiNode endNode = nodeMap.get(to);
 
             Edge<String> guiEdge = graph.getEdgeBetween(from, to);
             GuiLine newLine = new GuiLine(startNode, endNode, guiEdge);
@@ -94,7 +92,7 @@ public class RouteFileManager {
         ImageIO.write(bufferedImage, "png", file);
     }
 
-    public static ImageView loadPNG(String imagePath)throws IOException{
+    public static ImageView loadPNG(String imagePath) throws IOException {
         File file = new File(imagePath);
 
         if (!file.exists()) {
@@ -105,16 +103,5 @@ public class RouteFileManager {
         imageView.setPreserveRatio(true);
         return imageView;
 
-    }
-
-    private static Node getNodeByName(Pane nodeArea, String nodeName) {
-        for (Object node : nodeArea.getChildren()) {
-            if (node instanceof Node) {
-                if (((Node) node).getNodeName().equals(nodeName)) {
-                    return (Node) node;
-                }
-            }
-        }
-        return null;
     }
 }
