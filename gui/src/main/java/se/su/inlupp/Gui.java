@@ -1,8 +1,22 @@
 package se.su.inlupp;
 
 import java.awt.image.BufferedImage;
-import java.util.*;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Optional;
+import java.util.Set;
+
 import javax.imageio.ImageIO;
 
 import javafx.application.Application;
@@ -14,7 +28,6 @@ import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -23,9 +36,10 @@ import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.VBox;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.VBox;
+import javafx.scene.shape.Line;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
@@ -37,6 +51,7 @@ public class Gui extends Application {
   private ListView<String> listView;
   private Button addButton;
   private BorderPane root;
+  private Button addConnectionButton;
   private String imagePath;
   private boolean unsavedChanges = false;
   private TextField input1;
@@ -45,110 +60,132 @@ public class Gui extends Application {
   private FlowPane nodeControls;
   private ImageView backgroundImageView;
 
-  @Override
-  public void start(Stage stage) {
-    MenuBar menuBar = new MenuBar();
-    Menu fileMenu = new Menu("Route");
-    menuBar.getMenus().add(fileMenu);
-    root = new BorderPane();
+    @Override
+    public void start(Stage stage) {
+      root = new BorderPane();
 
-    MenuItem newItem = new MenuItem("New Route");
-    newItem.setOnAction(new NewHandler());
-    fileMenu.getItems().add(newItem);
+      createMenuBar();
 
-    MenuItem saveItem = new MenuItem("Save Route");
-    saveItem.setOnAction(new SaveHandler());
-    fileMenu.getItems().add(saveItem);
+      createBottomControls();
 
-    MenuItem loadItem = new MenuItem("Load Route");
-    loadItem.setOnAction(new LoadHandler());
-    fileMenu.getItems().add(loadItem);
+      createListView();
 
-    MenuItem exitItem = new MenuItem("Exit");
-    exitItem.setOnAction(new ExitHandler());
-    fileMenu.getItems().add(exitItem);
+      createNodeControls();
 
-    root.setTop(menuBar);
+      createNodeArea();
 
-    FlowPane frånTill = new FlowPane(); // ARFkod
-    frånTill.setHgap(10);
-    input1 = new TextField();
-    input1.setPromptText("Startnod");
-    input1.setStyle("-fx-border-color: black");
+      setupListeners();
 
-    input2 = new TextField();
-    input2.setPromptText("Slutnod");
-    input2.setStyle("-fx-border-color: black");
+      Scene scene = new Scene(root, 740, 580);
 
-    Button addConnectionButton = new Button("Add Connection");
-    addConnectionButton.setOnAction(new AddConnectionHandler());
-    // addConnectionButton.setDisable(true);
+      setupStage(stage, scene);
 
-    Button findPathButton = new Button("Find Path");
-    findPathButton.setOnAction(new FindPathHandler());
+      stage.show();
+    }
 
-    Button searchPatternButton = new Button("Switch search pattern");
+    private void createMenuBar() {
+      MenuBar menuBar = new MenuBar();
+      Menu fileMenu = new Menu("Route");
 
-    Label pil = new Label(" --> ");
+      MenuItem newItem = new MenuItem("New Route");
+      newItem.setOnAction(new NewHandler());
 
-    frånTill.getChildren().addAll(input1, pil, input2, findPathButton, addConnectionButton, searchPatternButton);
-    frånTill.setAlignment(Pos.TOP_RIGHT);
+      MenuItem saveItem = new MenuItem("Save Route");
+      saveItem.setOnAction(new SaveHandler());
 
-    VBox frånTillBox = new VBox();
-    frånTillBox.getChildren().addAll(menuBar, frånTill);
-    root.setBottom(frånTillBox);// Slut på ARFkod
+      MenuItem loadItem = new MenuItem("Load Route");
+      loadItem.setOnAction(new LoadHandler());
 
-    listView = new ListView<>();
-    listView.setPrefWidth(150);
-    ObservableList<String> nodeList = FXCollections.observableArrayList(graph.getNodes());
-    FXCollections.sort(nodeList);
-    listView.setItems(nodeList);
+      MenuItem exitItem = new MenuItem("Exit");
+      exitItem.setOnAction(new ExitHandler());
 
-    nodeControls = new FlowPane();
-    // nodeControls.setAlignment(Pos.CENTER);
-    nodeControls.setPadding(new Insets(5));
-    nodeControls.setHgap(5);
+      fileMenu.getItems().addAll(newItem, saveItem, loadItem, exitItem);
 
-    searchField = new TextField();
-    Button searchButton = new Button("Search");
-    addButton = new Button("Add Node");
-    addButton.setOnAction(new AddHandler());
-    Button deleteButton = new Button("Delete Node");
-    deleteButton.setOnAction(new DeleteHandler());
-    Button loadImageButton = new Button("Load Image");
-    loadImageButton.setOnAction(new LoadImageHandler());
-    nodeControls.getChildren().addAll(searchField, searchButton, addButton, deleteButton, loadImageButton);
+      menuBar.getMenus().add(fileMenu);
+      root.setTop(menuBar);
+    }
 
-    nodeArea = new Pane();
-    nodeArea.getChildren().add(nodeControls);
-
-    root.setLeft(listView);
-    root.setCenter(nodeArea);
-    // root.setCenter(nodeControls);
-
-    listView.getSelectionModel().selectedItemProperty()
-        .addListener((ObservableValue<? extends String> observable, String oldValue, String newValue) -> {
-          addConnectionButton.setDisable(false);
-        });
-
-    nodeArea = new Pane();
-    nodeArea.getChildren().add(nodeControls);
-
-    root.setLeft(listView);
-    root.setCenter(nodeArea);
-    // root.setCenter(nodeControls);
-    Scene scene = new Scene(root, 740, 580);
-    stage.setScene(scene);
-
-    stage.setOnCloseRequest(event -> {
-      if (!confirmUnsavedChanges()) {
-        event.consume();
-      }
-    });
-
-    stage.setScene(scene);
-    stage.show();
+    private void createBottomControls(){
+      FlowPane fromToPane = new FlowPane();
+      fromToPane.setHgap(10);
+      
+      input1 = new TextField();
+      input1.setPromptText("Start node");
+      input1.setStyle("-fx-border-color: black");
+      
+      input2 = new TextField();
+      input2.setPromptText("End node");
+      input2.setStyle("-fx-border-color: black");
+      
+      Button addConnectionButton = new Button("Add Connection");
+      addConnectionButton.setOnAction(new AddConnectionHandler());
+      
+      Button findPathButton = new Button("Find Path");
+      findPathButton.setOnAction(new FindPathHandler());
+      
+      Button searchPatternButton = new Button("Switch search pattern");
+      searchPatternButton.setOnAction(new SwitchSearchPatternHandler());
+      
+      Label arrow = new Label("-->");
+      
+      fromToPane.getChildren().addAll(input1, arrow, input2, findPathButton, addConnectionButton);
+      
+      VBox bottomBox = new VBox();
+      bottomBox.getChildren().add(fromToPane);
+      root.setBottom(bottomBox);
   }
+
+    private void createListView() {
+      listView = new ListView<>();
+      listView.setPrefWidth(150);
+      ObservableList<String> nodeList = FXCollections.observableArrayList(graph.getNodes());
+      FXCollections.sort(nodeList);
+      listView.setItems(nodeList);
+      root.setLeft(listView);
+    }
+
+    private void createNodeControls() {
+      nodeControls = new FlowPane();
+
+      nodeControls.setPadding(new Insets(5));
+      nodeControls.setHgap(5);
+
+      searchField = new TextField();
+      Button searchButton = new Button("Search");
+
+      addButton = new Button("Add Node");
+      addButton.setOnAction(new AddHandler());
+
+      Button deleteButton = new Button("Delete Node");
+      deleteButton.setOnAction(new DeleteHandler());
+
+      Button loadImageButton = new Button("Load Image");
+      loadImageButton.setOnAction(new LoadImageHandler());
+
+      nodeControls.getChildren().addAll(searchField, searchButton, addButton, deleteButton, loadImageButton);
+    }
+
+    private void createNodeArea(){
+      nodeArea = new Pane();
+      nodeArea.getChildren().add(nodeControls);
+      root.setCenter(nodeArea);
+    }
+
+    private void setupListeners() {
+      listView.getSelectionModel().selectedItemProperty()
+          .addListener((ObservableValue<? extends String> observable, String oldValue, String newValue) -> {
+            addConnectionButton.setDisable(false);
+          });
+    }
+
+    private void setupStage(Stage stage, Scene scene) {
+      stage.setScene(scene);
+      stage.setOnCloseRequest(event -> {
+        if (!confirmUnsavedChanges()) {
+          event.consume();
+        }
+      });
+    }
 
   public static void main(String[] args) {
     launch(args);
