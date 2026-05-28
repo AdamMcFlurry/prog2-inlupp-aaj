@@ -1,31 +1,20 @@
 package se.su.inlupp;
 
-import java.awt.image.BufferedImage;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
-import java.util.Set;
-
-import javax.imageio.ImageIO;
 
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -43,7 +32,6 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputDialog;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
@@ -67,6 +55,8 @@ public class Gui extends Application {
   private TextField input2;
   private FlowPane nodeControls;
   private ImageView backgroundImageView;
+  private PathFinder<String> currentPathFinder = new BFSPathFinder<>();
+  private String currentAlgorithm = "BFS";
 
   private Map<Edge<String>, GuiLine> edgeGuiLineMap = new HashMap<>();
   private Map<String, GuiNode> nodeMap = new HashMap<>();
@@ -130,11 +120,11 @@ public class Gui extends Application {
     findPathButton.setOnAction(new FindPathHandler());
 
     Button searchPatternButton = new Button("Switch search pattern");
-    // searchPatternButton.setOnAction(new SwitchSearchPatternHandler());
+    searchPatternButton.setOnAction(new SwitchSearchPatternHandler(searchPatternButton));
 
     Label arrow = new Label("-->");
 
-    fromToPane.getChildren().addAll(input1, arrow, input2, findPathButton, addConnectionButton);
+    fromToPane.getChildren().addAll(input1, arrow, input2, findPathButton, addConnectionButton, searchPatternButton);
 
     VBox bottomBox = new VBox();
     bottomBox.getChildren().add(fromToPane);
@@ -366,8 +356,7 @@ public class Gui extends Application {
   class FindPathHandler implements EventHandler<ActionEvent> {
     @Override
     public void handle(ActionEvent event) {
-      PathFinder<String> bfsPathFinder = new BFSPathFinder<>();
-      Path<String> path = bfsPathFinder.findPath(graph, input1.getText(), input2.getText());
+      Path<String> path = currentPathFinder.findPath(graph, input1.getText(), input2.getText());
       input1.clear();
       input2.clear();
       int totalWeight = 0;
@@ -386,6 +375,30 @@ public class Gui extends Application {
       }
 
       Alert alert = new Alert(Alert.AlertType.INFORMATION, "The total weight of the path is " + totalWeight);
+      alert.showAndWait();
+    }
+  }
+
+  class SwitchSearchPatternHandler implements EventHandler<ActionEvent> {
+    private final Button button;
+
+    public SwitchSearchPatternHandler(Button button) {
+      this.button = button;
+    }
+
+    @Override
+    public void handle(ActionEvent event) {
+      if (currentPathFinder instanceof BFSPathFinder) {
+        currentPathFinder = new DFSPathFinder<>();
+        currentAlgorithm = "DFS";
+        button.setText("Switch to BFS");
+      } else {
+        currentPathFinder = new BFSPathFinder<>();
+        currentAlgorithm = "BFS";
+        button.setText("Switch to DFS");
+      }
+
+      Alert alert = new Alert(Alert.AlertType.INFORMATION, "Current algorithm: " + currentAlgorithm);
       alert.showAndWait();
     }
   }
@@ -461,10 +474,6 @@ public class Gui extends Application {
 
   class SaveHandler implements EventHandler<ActionEvent> {
     public void handle(ActionEvent event) {
-      // F6, F9
-      // Sparas både som textfil (kan laddas up och manipuleras) och som .png (kan
-      // visas men inte manipuleras) Hittade i F14
-      // Hur ska vi göra med att välja antingen PNG eller TXT?
       savePNG();
       saveTXT();
     }
@@ -472,9 +481,6 @@ public class Gui extends Application {
 
   class LoadHandler implements EventHandler<ActionEvent> {
     public void handle(ActionEvent event) {
-      // F6, F8, F9
-      // Ladda upp. Både som textfil (manipuleras) och som .png (inte manipuleras)
-      // Hur ska vi göra med att välja antingen PNG eller TXT?
       if (confirmUnsavedChanges()) {
         loadTXT();
         loadPNG();
