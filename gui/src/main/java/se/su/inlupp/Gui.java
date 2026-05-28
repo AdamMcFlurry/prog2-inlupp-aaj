@@ -1,21 +1,8 @@
 package se.su.inlupp;
 
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Optional;
-import java.util.Set;
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.FileNotFoundException;
+import java.util.*;
+import java.io.*;
 import javax.imageio.ImageIO;
 
 import javafx.application.Application;
@@ -30,16 +17,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.Label;
-import javafx.scene.control.ListView;
-import javafx.scene.control.Menu;
-import javafx.scene.control.MenuBar;
-import javafx.scene.control.MenuItem;
-import javafx.scene.control.TextField;
-import javafx.scene.control.TextInputDialog;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
@@ -48,7 +26,6 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.Pane;
-import javafx.scene.shape.Line;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
@@ -60,7 +37,6 @@ public class Gui extends Application {
   private ListView<String> listView;
   private Button addButton;
   private BorderPane root;
-  // private Button addConnectionButton;
   private String imagePath;
   private boolean unsavedChanges = false;
   private TextField input1;
@@ -178,6 +154,165 @@ public class Gui extends Application {
     launch(args);
   }
 
+  private Node getNodeByName(String nodeName) {
+    for (Object node : nodeArea.getChildren()) {
+      if (node instanceof Node) {
+        if (((Node) node).getNodeName().equals(nodeName)) {
+          return (Node) node;
+        }
+      }
+    }
+    return null;
+  }
+
+  private void saveTXT() {
+    try {
+      PrintWriter writer = new PrintWriter("route.txt");
+
+      writer.println("IMAGE:" + imagePath);
+
+      for (String node : graph.getNodes()) {
+        Node visualNode = getNodeByName(node);
+        writer.println("NODE:" + node + ":" + visualNode.getLayoutX() + ":" + visualNode.getLayoutY());
+      }
+      for (String node : graph.getNodes()) {
+        for (Edge<String> edge : graph.getEdgesFrom(node)) {
+          writer.println("EDGE:" + node + ":" + edge.getDestination() + ":" + edge.getName() + ":" + edge.getWeight());
+        }
+      }
+      writer.close();
+      unsavedChanges = false;
+
+    } catch (Exception e) {
+      Alert alert = new Alert(Alert.AlertType.ERROR, "Could not save route.");
+      alert.showAndWait();
+      unsavedChanges = true;
+
+    }
+  }
+
+  private void savePNG() {
+    try {
+      File file = new File("route.png");
+      WritableImage image = nodeArea.snapshot(null, null);
+      BufferedImage bufferedImage = SwingFXUtils.fromFXImage(image, null);
+      ImageIO.write(bufferedImage, "png", file);
+
+      imagePath = file.getAbsolutePath();
+      unsavedChanges = false;
+    } catch (IOException e) {
+      Alert alert = new Alert(Alert.AlertType.ERROR, "Could not save PNG");
+      alert.showAndWait();
+      unsavedChanges = true;
+    }
+  }
+
+  private void loadTXT() {
+    try {
+      graph = new ListGraph<>();
+      nodeArea.getChildren().clear();
+      nodeArea.getChildren().add(nodeControls);
+      FileReader fileReader = new FileReader("route.txt");
+      BufferedReader reader = new BufferedReader(fileReader);
+      List<String[]> edgeList = new ArrayList<>();
+
+      String line;
+
+      while ((line = reader.readLine()) != null) {
+        if (line.startsWith("IMAGE:")) {
+          imagePath = line.substring(6);
+        } else if (line.startsWith("NODE:")) {
+          String[] parts = line.split(":");
+          String nodeName = parts[1];
+          double x = Double.parseDouble(parts[2]);
+          double y = Double.parseDouble(parts[3]);
+          graph.add(nodeName);
+          Node visualNode = new Node(x, y, nodeName);
+          nodeArea.getChildren().add(visualNode);
+        } else if (line.startsWith("EDGE:")) {
+          String[] parts = line.split(":");
+          edgeList.add(parts);
+        }
+      }
+      reader.close();
+      fileReader.close();
+      for (String[] edge : edgeList) {
+        String from = edge[1];
+        String to = edge[2];
+        String name = edge[3];
+        int weight = Integer.parseInt(edge[4]);
+
+        graph.connect(from, to, name, weight);
+
+        Node startNode = getNodeByName(from);
+        Node endNode = getNodeByName(to);
+
+        Edge<String> guiEdge = graph.getEdgeBetween(from, to);
+        GuiEdgeLine newLine = GuiEdgeLine.createNewLine(startNode, endNode, guiEdge);
+        lineList.put(guiEdge, newLine);
+        nodeArea.getChildren().add(newLine);
+
+        ObservableList<String> updatedList = FXCollections.observableArrayList(graph.getNodes());
+        FXCollections.sort(updatedList);
+        listView.setItems(updatedList);
+      }
+    } catch (FileNotFoundException e) {
+      Alert alert = new Alert(Alert.AlertType.ERROR, "route.txt not found");
+      alert.showAndWait();
+    } catch (IOException e) {
+      Alert alert = new Alert(Alert.AlertType.ERROR, "Could not read file.");
+      alert.showAndWait();
+    } catch (Exception e) {
+      Alert alert = new Alert(Alert.AlertType.ERROR, "Could not load route.");
+      alert.showAndWait();
+    }
+  }
+
+  private void loadPNG() {
+    try {
+      if (imagePath == null || imagePath.isEmpty()) {
+        Alert alert = new Alert(Alert.AlertType.ERROR, "No image path saved.");
+        alert.showAndWait();
+        return;
+      }
+      File file = new File(imagePath);
+      if (!file.exists()) {
+        Alert alert = new Alert(Alert.AlertType.ERROR, "Image file not found.");
+        alert.showAndWait();
+        return;
+      }
+      Image image = new Image(file.toURI().toString());
+      ImageView imageView = new ImageView(image);
+      imageView.setPreserveRatio(true);
+      imageView.setFitWidth(800);
+      imageView.setFitHeight(600);
+
+      Pane imagePane = new Pane(imageView);
+      Scene imageScene = new Scene(imagePane);
+      Stage imageStage = new Stage();
+      imageStage.setTitle("Loaded Route Image");
+      imageStage.setScene(imageScene);
+      imageStage.show();
+    } catch (Exception e) {
+      Alert alert = new Alert(Alert.AlertType.ERROR, "Could not load PNG.");
+      alert.showAndWait();
+    }
+  }
+
+  private boolean confirmUnsavedChanges() {
+    if (!unsavedChanges) {
+      return true;
+    }
+    Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+    alert.setTitle("Unsaved changes");
+    alert.setHeaderText("You have unsaved changes.");
+    alert.setContentText("Are you sure you want to continue?");
+
+    Optional<ButtonType> result = alert.showAndWait();
+
+    return result.isPresent() && result.get() == ButtonType.OK;
+  }
+
   class AddHandler implements EventHandler<ActionEvent> {
     @Override
     public void handle(ActionEvent event) {
@@ -202,46 +337,12 @@ public class Gui extends Application {
       Optional<String> result = tiDialog.showAndWait();
       if (result.isPresent()) {
         graph.connect(node1, node2, (node1 + " till " + node2), Integer.parseInt(result.get()));
-        createNewLine(getNodeByName(node1), getNodeByName(node2), graph.getEdgeBetween(node1, node2));
+        
+        GuiEdgeLine newLine = GuiEdgeLine.createNewLine(getNodeByName(node1), getNodeByName(node2), graph.getEdgeBetween(node1, node2));
+        lineList.put(graph.getEdgeBetween(node1, node2), newLine);
+        nodeArea.getChildren().add(newLine);
       }
     }
-  }
-
-  private void createNewLine(Node node1, Node node2, Edge<String> edge) {
-    GuiEdgeLine newLine = new GuiEdgeLine(edge);
-    lineList.put(edge, newLine);
-    newLine.setStartX(node1.getLayoutX());
-    newLine.setStartY(node1.getLayoutY());
-    newLine.setEndX(node2.getLayoutX());
-    newLine.setEndY(node2.getLayoutY());
-    newLine.startXProperty().bind(node1.layoutXProperty());
-    newLine.startYProperty().bind(node1.layoutYProperty());
-    newLine.endXProperty().bind(node2.layoutXProperty());
-    newLine.endYProperty().bind(node2.layoutYProperty());
-    nodeArea.getChildren().add(newLine);
-  }
-
-  private class GuiEdgeLine extends Line {
-    private final Edge<String> lineEdge;
-
-    public GuiEdgeLine(Edge<String> lineEdge) {
-      this.lineEdge = lineEdge;
-    }
-
-    public Edge<String> getLineEdge() {
-      return lineEdge;
-    }
-  }
-
-  private Node getNodeByName(String nodeName) {
-    for (Object node : nodeArea.getChildren()) {
-      if (node instanceof Node) {
-        if (((Node) node).getNodeName().equals(nodeName)) {
-          return (Node) node;
-        }
-      }
-    }
-    return null;
   }
 
   class NewButtonHandler implements EventHandler<ActionEvent> {
@@ -354,11 +455,11 @@ public class Gui extends Application {
             toBeRemoved.add(k);
           }
         });
-        
+
         for (Edge<String> edge : toBeRemoved) {
           nodeArea.getChildren().remove(lineList.remove(edge));
         }
-        
+
         graph.remove(selectedNode);
         graph.getNodes().stream()
             .forEach((n) -> graph.getEdgesFrom(n).stream().forEach((e) -> System.out.println("2 " + e)));
@@ -417,151 +518,5 @@ public class Gui extends Application {
         Platform.exit();
       }
     }
-  }
-
-  private void saveTXT() {
-    try {
-      PrintWriter writer = new PrintWriter("route.txt");
-
-      writer.println("IMAGE:" + imagePath);
-
-      for (String node : graph.getNodes()) {
-        Node visualNode = getNodeByName(node);
-        writer.println("NODE:" + node + ":" + visualNode.getLayoutX() + ":" + visualNode.getLayoutY());
-      }
-      for (String node : graph.getNodes()) {
-        for (Edge<String> edge : graph.getEdgesFrom(node)) {
-          writer.println("EDGE:" + node + ":" + edge.getDestination() + ":" + edge.getName() + ":" + edge.getWeight());
-        }
-      }
-      writer.close();
-      unsavedChanges = false;
-
-    } catch (Exception e) {
-      Alert alert = new Alert(Alert.AlertType.ERROR, "Could not save route.");
-      alert.showAndWait();
-      unsavedChanges = true;
-
-    }
-  }
-
-  private void savePNG() {
-    try {
-      File file = new File("route.png");
-      WritableImage image = nodeArea.snapshot(null, null);
-      BufferedImage bufferedImage = SwingFXUtils.fromFXImage(image, null);
-      ImageIO.write(bufferedImage, "png", file);
-
-      imagePath = file.getAbsolutePath();
-      unsavedChanges = false;
-    } catch (IOException e) {
-      Alert alert = new Alert(Alert.AlertType.ERROR, "Could not save PNG");
-      alert.showAndWait();
-      unsavedChanges = true;
-    }
-  }
-
-  private void loadTXT() {
-    try {
-      graph = new ListGraph<>();
-      nodeArea.getChildren().clear();
-      nodeArea.getChildren().add(nodeControls);
-      FileReader fileReader = new FileReader("route.txt");
-      BufferedReader reader = new BufferedReader(fileReader);
-      List<String[]> edgeList = new ArrayList<>();
-
-      String line;
-
-      while ((line = reader.readLine()) != null) {
-        if (line.startsWith("IMAGE:")) {
-          imagePath = line.substring(6);
-        } else if (line.startsWith("NODE:")) {
-          String[] parts = line.split(":");
-          String nodeName = parts[1];
-          double x = Double.parseDouble(parts[2]);
-          double y = Double.parseDouble(parts[3]);
-          graph.add(nodeName);
-          Node visualNode = new Node(x, y, nodeName);
-          nodeArea.getChildren().add(visualNode);
-        } else if (line.startsWith("EDGE:")) {
-          String[] parts = line.split(":");
-          edgeList.add(parts);
-        }
-      }
-      reader.close();
-      fileReader.close();
-      for (String[] edge : edgeList) {
-        String from = edge[1];
-        String to = edge[2];
-        String name = edge[3];
-        int weight = Integer.parseInt(edge[4]);
-
-        graph.connect(from, to, name, weight);
-
-        Node startNode = getNodeByName(from);
-        Node endNode = getNodeByName(to);
-
-        Edge<String> guiEdge = graph.getEdgeBetween(from, to);
-        createNewLine(startNode, endNode, guiEdge);
-
-        ObservableList<String> updatedList = FXCollections.observableArrayList(graph.getNodes());
-        FXCollections.sort(updatedList);
-        listView.setItems(updatedList);
-      }
-    } catch (FileNotFoundException e) {
-      Alert alert = new Alert(Alert.AlertType.ERROR, "route.txt not found");
-      alert.showAndWait();
-    } catch (IOException e) {
-      Alert alert = new Alert(Alert.AlertType.ERROR, "Could not read file.");
-      alert.showAndWait();
-    } catch (Exception e) {
-      Alert alert = new Alert(Alert.AlertType.ERROR, "Could not load route.");
-      alert.showAndWait();
-    }
-  }
-
-  private void loadPNG() {
-    try {
-      if (imagePath == null || imagePath.isEmpty()) {
-        Alert alert = new Alert(Alert.AlertType.ERROR, "No image path saved.");
-        alert.showAndWait();
-        return;
-      }
-      File file = new File(imagePath);
-      if (!file.exists()) {
-        Alert alert = new Alert(Alert.AlertType.ERROR, "Image file not found.");
-        alert.showAndWait();
-        return;
-      }
-      Image image = new Image(file.toURI().toString());
-      ImageView imageView = new ImageView(image);
-      imageView.setPreserveRatio(true);
-      imageView.setFitWidth(800);
-      imageView.setFitHeight(600);
-
-      Pane imagePane = new Pane(imageView);
-      Scene imageScene = new Scene(imagePane);
-      Stage imageStage = new Stage();
-      imageStage.setTitle("Loaded Route Image");
-      imageStage.setScene(imageScene);
-      imageStage.show();
-    } catch (Exception e) {
-      Alert alert = new Alert(Alert.AlertType.ERROR, "Could not load PNG.");
-      alert.showAndWait();
-    }
-  }
-
-  private boolean confirmUnsavedChanges() {
-    if (!unsavedChanges) {
-      return true;
-    }
-    Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-    alert.setTitle("Unsaved changes");
-    alert.setHeaderText("You have unsaved changes.");
-    alert.setContentText("Are you sure you want to continue?");
-
-    Optional<ButtonType> result = alert.showAndWait();
-
-    return result.isPresent() && result.get() == ButtonType.OK;
   }
 }
