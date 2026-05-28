@@ -255,11 +255,13 @@ public class Gui extends Application {
       addButton.setDisable(true);
     }
   }
+
   class LoadImageHandler implements EventHandler<ActionEvent> {
-    public void handle(ActionEvent event){
+    public void handle(ActionEvent event) {
       FileChooser fileChooser = new FileChooser();
       fileChooser.setTitle("Open Image");
-      fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg"));
+      fileChooser.getExtensionFilters()
+          .addAll(new FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg"));
 
       File selectedFile = fileChooser.showOpenDialog(null);
       if (selectedFile != null) {
@@ -342,12 +344,34 @@ public class Gui extends Application {
         return;
       }
       try {
-        graph.getEdgesFrom(selectedNode).stream().forEach((e)->nodeArea.getChildren().remove(lineList.remove(e)));
+        graph.getNodes().stream()
+            .forEach((n) -> graph.getEdgesFrom(n).stream().forEach((e) -> System.out.println("1 " + e)));
+
+        graph.getEdgesFrom(selectedNode).stream().forEach((e) -> {
+          nodeArea.getChildren().remove(lineList.remove(e));
+        });
+
+        Set<Edge<String>> toBeRemoved = new HashSet<>();
+
+        System.out.println("og " + lineList.keySet());
+        lineList.keySet().stream().forEach((k) -> {
+          if (k.getDestination().equals(selectedNode)) {
+            toBeRemoved.add(k);
+          }
+        });
+        
+        for (Edge<String> edge : toBeRemoved) {
+          nodeArea.getChildren().remove(lineList.remove(edge));
+        }
+
+        System.out.println("og " + lineList.keySet());
         
         graph.remove(selectedNode);
+        graph.getNodes().stream()
+            .forEach((n) -> graph.getEdgesFrom(n).stream().forEach((e) -> System.out.println("2 " + e)));
         listView.getItems().remove(selectedNode);
         nodeArea.getChildren().remove(getNodeByName(selectedNode));
-        
+
         unsavedChanges = true;
 
       } catch (NoSuchElementException e) {
