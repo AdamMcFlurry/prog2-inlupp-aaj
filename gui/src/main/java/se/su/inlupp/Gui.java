@@ -46,6 +46,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.shape.Line;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 public class Gui extends Application {
@@ -63,6 +64,7 @@ public class Gui extends Application {
   private TextField input2;
   private final ArrayList<GuiEdgeLine> lineList = new ArrayList<>();
   private FlowPane nodeControls;
+  private ImageView backgroundImageView;
 
   @Override
   public void start(Stage stage) {
@@ -106,7 +108,7 @@ public class Gui extends Application {
     Button findPathButton = new Button("Find Path");
     findPathButton.setOnAction(new FindPathHandler());
 
-    Button searchPaternButton = new Button ("Switsh search patern");
+    Button searchPaternButton = new Button ("Switch search patern");
     
 
     Label pil = new Label(" --> ");
@@ -135,7 +137,9 @@ public class Gui extends Application {
     addButton.setOnAction(new AddHandler());
     Button deleteButton = new Button("Delete Node");
     deleteButton.setOnAction(new DeleteHandler());
-    nodeControls.getChildren().addAll(searchField, searchButton, addButton, deleteButton);
+    Button loadImageButton = new Button("Load Image");
+    loadImageButton.setOnAction(new LoadImageHandler());
+    nodeControls.getChildren().addAll(searchField, searchButton, addButton, deleteButton, loadImageButton);
 
     nodeArea = new Pane();
     nodeArea.getChildren().add(nodeControls);
@@ -244,6 +248,31 @@ public class Gui extends Application {
       addButton.setDisable(true);
     }
   }
+  class LoadImageHandler implements EventHandler<ActionEvent> {
+    public void handle(ActionEvent event){
+      FileChooser fileChooser = new FileChooser();
+      fileChooser.setTitle("Open Image");
+      fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg"));
+
+      File selectedFile = fileChooser.showOpenDialog(null);
+      if (selectedFile != null) {
+        imagePath = selectedFile.getAbsolutePath();
+        Image image = new Image(selectedFile.toURI().toString());
+
+        backgroundImageView = new ImageView(image);
+        backgroundImageView.setPreserveRatio(true);
+        backgroundImageView.fitWidthProperty().bind(nodeArea.widthProperty());
+        backgroundImageView.fitHeightProperty().bind(nodeArea.heightProperty());
+        backgroundImageView.setMouseTransparent(true);
+
+        nodeArea.getChildren().remove(backgroundImageView);
+        nodeArea.getChildren().add(0, backgroundImageView);
+
+        unsavedChanges = true;
+
+      }
+    }
+  }
 
   class FindPathHandler implements EventHandler<ActionEvent> {
     @Override
@@ -333,7 +362,10 @@ public class Gui extends Application {
     public void handle(ActionEvent event) {
       if (confirmUnsavedChanges()) {
         graph = new ListGraph<>();
-        AddDefaultStations();
+        nodeArea.getChildren().clear();
+        nodeArea.getChildren().add(nodeControls);
+        listView.getItems().clear();
+        lineList.clear();
 
         unsavedChanges = false;
       }
@@ -369,14 +401,6 @@ public class Gui extends Application {
         Platform.exit();
       }
     }
-  }
-
-  private void AddDefaultStations() {
-    graph.add("T-Centralen");
-    graph.add("Hötorget");
-    graph.add("Farsta");
-    graph.add("Skarpnäck");
-    graph.add("Gullmarsplan");
   }
 
   private void saveTXT() {
