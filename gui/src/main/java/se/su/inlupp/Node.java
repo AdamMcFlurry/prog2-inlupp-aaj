@@ -1,15 +1,10 @@
 package se.su.inlupp;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import javafx.event.EventHandler;
 import javafx.scene.control.TextArea;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.Background;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
@@ -69,14 +64,6 @@ public class Node extends BorderPane {
 
     public String getNodeName() {
         return this.nodeName;
-    }
-
-    public double getX() {
-        return getLayoutX();
-    }
-
-    public double getY() {
-        return getLayoutY();
     }
 
     class StartDragHandler implements EventHandler<MouseEvent> {

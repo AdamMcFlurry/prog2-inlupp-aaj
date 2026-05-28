@@ -20,7 +20,6 @@ import javax.imageio.ImageIO;
 
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -211,10 +210,10 @@ public class Gui extends Application {
   private void createNewLine(Node node1, Node node2, Edge<String> edge) {
     GuiEdgeLine newLine = new GuiEdgeLine(edge);
     lineList.put(edge, newLine);
-    newLine.setStartX(node1.getX());
-    newLine.setStartY(node1.getY());
-    newLine.setEndX(node2.getX());
-    newLine.setEndY(node2.getY());
+    newLine.setStartX(node1.getLayoutX());
+    newLine.setStartY(node1.getLayoutY());
+    newLine.setEndX(node2.getLayoutX());
+    newLine.setEndY(node2.getLayoutY());
     newLine.startXProperty().bind(node1.layoutXProperty());
     newLine.startYProperty().bind(node1.layoutYProperty());
     newLine.endXProperty().bind(node2.layoutXProperty());
@@ -344,16 +343,12 @@ public class Gui extends Application {
         return;
       }
       try {
-        graph.getNodes().stream()
-            .forEach((n) -> graph.getEdgesFrom(n).stream().forEach((e) -> System.out.println("1 " + e)));
-
         graph.getEdgesFrom(selectedNode).stream().forEach((e) -> {
           nodeArea.getChildren().remove(lineList.remove(e));
         });
 
         Set<Edge<String>> toBeRemoved = new HashSet<>();
 
-        System.out.println("og " + lineList.keySet());
         lineList.keySet().stream().forEach((k) -> {
           if (k.getDestination().equals(selectedNode)) {
             toBeRemoved.add(k);
@@ -363,8 +358,6 @@ public class Gui extends Application {
         for (Edge<String> edge : toBeRemoved) {
           nodeArea.getChildren().remove(lineList.remove(edge));
         }
-
-        System.out.println("og " + lineList.keySet());
         
         graph.remove(selectedNode);
         graph.getNodes().stream()
@@ -434,7 +427,7 @@ public class Gui extends Application {
 
       for (String node : graph.getNodes()) {
         Node visualNode = getNodeByName(node);
-        writer.println("NODE:" + node + ":" + visualNode.getX() + ":" + visualNode.getY());
+        writer.println("NODE:" + node + ":" + visualNode.getLayoutX() + ":" + visualNode.getLayoutY());
       }
       for (String node : graph.getNodes()) {
         for (Edge<String> edge : graph.getEdgesFrom(node)) {
