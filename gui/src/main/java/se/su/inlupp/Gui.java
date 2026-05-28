@@ -313,6 +313,16 @@ public class Gui extends Application {
     return result.isPresent() && result.get() == ButtonType.OK;
   }
 
+  private Set<Edge<String>> getAllLines() {
+    Set<Edge<String>> lineSet = new HashSet<>();
+    for (var child : nodeArea.getChildren()) {
+      if (child instanceof GuiEdgeLine) {
+        lineSet.add(((GuiEdgeLine) child).getLineEdge());
+      }
+    }
+    return lineSet;
+  }
+
   class AddHandler implements EventHandler<ActionEvent> {
     @Override
     public void handle(ActionEvent event) {
@@ -337,8 +347,9 @@ public class Gui extends Application {
       Optional<String> result = tiDialog.showAndWait();
       if (result.isPresent()) {
         graph.connect(node1, node2, (node1 + " till " + node2), Integer.parseInt(result.get()));
-        
-        GuiEdgeLine newLine = GuiEdgeLine.createNewLine(getNodeByName(node1), getNodeByName(node2), graph.getEdgeBetween(node1, node2));
+
+        GuiEdgeLine newLine = GuiEdgeLine.createNewLine(getNodeByName(node1), getNodeByName(node2),
+            graph.getEdgeBetween(node1, node2));
         edgeGUILineMap.put(graph.getEdgeBetween(node1, node2), newLine);
         nodeArea.getChildren().add(newLine);
       }
