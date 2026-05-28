@@ -6,9 +6,13 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.Set;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.FileNotFoundException;
@@ -61,7 +65,7 @@ public class Gui extends Application {
   private boolean unsavedChanges = false;
   private TextField input1;
   private TextField input2;
-  private final ArrayList<GuiEdgeLine> lineList = new ArrayList<>();
+  private final Map<Edge<String>, GuiEdgeLine> lineList = new HashMap<>();
   private FlowPane nodeControls;
 
   @Override
@@ -106,12 +110,11 @@ public class Gui extends Application {
     Button findPathButton = new Button("Find Path");
     findPathButton.setOnAction(new FindPathHandler());
 
-    Button searchPaternButton = new Button ("Switsh search patern");
-    
+    Button searchPatternButton = new Button("Switch search pattern");
 
     Label pil = new Label(" --> ");
 
-    frånTill.getChildren().addAll(input1, pil, input2, findPathButton, addConnectionButton, searchPaternButton);
+    frånTill.getChildren().addAll(input1, pil, input2, findPathButton, addConnectionButton, searchPatternButton);
     frånTill.setAlignment(Pos.TOP_RIGHT);
 
     VBox frånTillBox = new VBox();
@@ -185,7 +188,9 @@ public class Gui extends Application {
     @Override
     public void handle(ActionEvent event) {
       String node1 = input1.getText();
+      input1.clear();
       String node2 = input2.getText();
+      input2.clear();
       TextInputDialog tiDialog = new TextInputDialog();
       tiDialog.setTitle("Connection Weight Input");
       tiDialog.setHeaderText("Enter the weight of the dialog: ");
@@ -201,7 +206,7 @@ public class Gui extends Application {
 
   private void createNewLine(Node node1, Node node2, Edge<String> edge) {
     GuiEdgeLine newLine = new GuiEdgeLine(edge);
-    lineList.add(newLine);
+    lineList.put(edge, newLine);
     newLine.setStartX(node1.getX());
     newLine.setStartY(node1.getY());
     newLine.setEndX(node2.getX());
@@ -215,9 +220,11 @@ public class Gui extends Application {
 
   private class GuiEdgeLine extends Line {
     private final Edge<String> lineEdge;
+
     public GuiEdgeLine(Edge<String> lineEdge) {
       this.lineEdge = lineEdge;
     }
+
     public Edge<String> getLineEdge() {
       return lineEdge;
     }
@@ -250,16 +257,18 @@ public class Gui extends Application {
     public void handle(ActionEvent event) {
       PathFinder<String> bfsPathFinder = new BFSPathFinder<>();
       Path<String> path = bfsPathFinder.findPath(graph, input1.getText(), input2.getText());
+      input1.clear();
+      input2.clear();
       int totalWeight = 0;
-      for (GuiEdgeLine edgeLine : lineList) {
+      for (GuiEdgeLine edgeLine : lineList.values()) {
         edgeLine.setStyle("-fx-stroke: black;");
       }
-      
-        for (Edge<String> edge : path.getEdges()) {
-        for (GuiEdgeLine edgeLine : lineList) {
+
+      for (Edge<String> edge : path.getEdges()) {
+        for (GuiEdgeLine edgeLine : lineList.values()) {
           if (edgeLine.getLineEdge().equals(edge)) {
             edgeLine.setStyle("-fx-stroke: red;");
-            totalWeight+=edge.getWeight();
+            totalWeight += edge.getWeight();
 
           }
         }
@@ -284,6 +293,7 @@ public class Gui extends Application {
       }
 
       Node node = new Node(x, y, searchField.getText());
+      searchField.clear();
       nodeArea.getChildren().add(node);
 
       nodeArea.setCursor(Cursor.DEFAULT);
@@ -303,9 +313,12 @@ public class Gui extends Application {
         return;
       }
       try {
+        graph.getEdgesFrom(selectedNode).stream().forEach((e)->nodeArea.getChildren().remove(lineList.remove(e)));
+        
         graph.remove(selectedNode);
         listView.getItems().remove(selectedNode);
         nodeArea.getChildren().remove(getNodeByName(selectedNode));
+        
         unsavedChanges = true;
 
       } catch (NoSuchElementException e) {
@@ -314,20 +327,6 @@ public class Gui extends Application {
       }
     }
   }
-
-  // class SaveButtonHandler implements EventHandler<ActionEvent> {
-  // @Override
-  // public void handle(ActionEvent event) {
-  // try {
-  // WritableImage image = nodeArea.snapshot(null,null);
-  // BufferedImage bufferedImage = SwingFXUtils.fromFXImage(image, null);
-  // ImageIO.write(bufferedImage, "png", new File("capture.png"));
-  // } catch (IOException e) {
-  // Alert alert = new Alert(Alert.AlertType.ERROR, "IO Error");
-  // alert.showAndWait();
-  // }
-  // }
-  // }
 
   class NewHandler implements EventHandler<ActionEvent> {
     public void handle(ActionEvent event) {
@@ -432,27 +431,25 @@ public class Gui extends Application {
 
       String line;
 
-      while ((line = reader.readLine()) !=null){
-        if (line.startsWith("IMAGE:")){
+      while ((line = reader.readLine()) != null) {
+        if (line.startsWith("IMAGE:")) {
           imagePath = line.substring(6);
-        }
-        else if (line.startsWith("NODE:")){
+        } else if (line.startsWith("NODE:")) {
           String[] parts = line.split(":");
           String nodeName = parts[1];
           double x = Double.parseDouble(parts[2]);
           double y = Double.parseDouble(parts[3]);
           graph.add(nodeName);
-          Node visualNode= new Node(x, y, nodeName);
+          Node visualNode = new Node(x, y, nodeName);
           nodeArea.getChildren().add(visualNode);
-        }
-        else if (line.startsWith("EDGE:")){
+        } else if (line.startsWith("EDGE:")) {
           String[] parts = line.split(":");
           edgeList.add(parts);
         }
       }
       reader.close();
       fileReader.close();
-      for (String[] edge : edgeList){
+      for (String[] edge : edgeList) {
         String from = edge[1];
         String to = edge[2];
         String name = edge[3];
@@ -470,13 +467,13 @@ public class Gui extends Application {
         FXCollections.sort(updatedList);
         listView.setItems(updatedList);
       }
-    } catch (FileNotFoundException e){
+    } catch (FileNotFoundException e) {
       Alert alert = new Alert(Alert.AlertType.ERROR, "route.txt not found");
       alert.showAndWait();
-    } catch (IOException e){
+    } catch (IOException e) {
       Alert alert = new Alert(Alert.AlertType.ERROR, "Could not read file.");
       alert.showAndWait();
-    } catch (Exception e){
+    } catch (Exception e) {
       Alert alert = new Alert(Alert.AlertType.ERROR, "Could not load route.");
       alert.showAndWait();
     }
@@ -484,14 +481,14 @@ public class Gui extends Application {
 
   private void loadPNG() {
     try {
-      if(imagePath == null || imagePath.isEmpty()){
-        Alert alert = new Alert(Alert.AlertType.ERROR,"No image path saved.");
+      if (imagePath == null || imagePath.isEmpty()) {
+        Alert alert = new Alert(Alert.AlertType.ERROR, "No image path saved.");
         alert.showAndWait();
         return;
       }
       File file = new File(imagePath);
-      if(!file.exists()){
-        Alert alert = new Alert(Alert.AlertType.ERROR,"Image file not found.");
+      if (!file.exists()) {
+        Alert alert = new Alert(Alert.AlertType.ERROR, "Image file not found.");
         alert.showAndWait();
         return;
       }
