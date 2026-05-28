@@ -65,132 +65,127 @@ public class Gui extends Application {
   private FlowPane nodeControls;
   private ImageView backgroundImageView;
 
-    @Override
-    public void start(Stage stage) {
-      root = new BorderPane();
+  @Override
+  public void start(Stage stage) {
+    root = new BorderPane();
 
-      createMenuBar();
+    createMenuBar();
+    createBottomControls();
+    createListView();
+    createNodeControls();
+    createNodeArea();
+    setupListeners();
 
-      createBottomControls();
+    Scene scene = new Scene(root, 740, 580);
 
-      createListView();
+    setupStage(stage, scene);
 
-      createNodeControls();
-
-      createNodeArea();
-
-      setupListeners();
-
-      Scene scene = new Scene(root, 740, 580);
-
-      setupStage(stage, scene);
-
-      stage.show();
-    }
-
-    private void createMenuBar() {
-      MenuBar menuBar = new MenuBar();
-      Menu fileMenu = new Menu("Route");
-
-      MenuItem newItem = new MenuItem("New Route");
-      newItem.setOnAction(new NewHandler());
-
-      MenuItem saveItem = new MenuItem("Save Route");
-      saveItem.setOnAction(new SaveHandler());
-
-      MenuItem loadItem = new MenuItem("Load Route");
-      loadItem.setOnAction(new LoadHandler());
-
-      MenuItem exitItem = new MenuItem("Exit");
-      exitItem.setOnAction(new ExitHandler());
-
-      fileMenu.getItems().addAll(newItem, saveItem, loadItem, exitItem);
-
-      menuBar.getMenus().add(fileMenu);
-      root.setTop(menuBar);
-    }
-
-    private void createBottomControls(){
-      FlowPane fromToPane = new FlowPane();
-      fromToPane.setHgap(10);
-      
-      input1 = new TextField();
-      input1.setPromptText("Start node");
-      input1.setStyle("-fx-border-color: black");
-      
-      input2 = new TextField();
-      input2.setPromptText("End node");
-      input2.setStyle("-fx-border-color: black");
-      
-      Button addConnectionButton = new Button("Add Connection");
-      addConnectionButton.setOnAction(new AddConnectionHandler());
-      
-      Button findPathButton = new Button("Find Path");
-      findPathButton.setOnAction(new FindPathHandler());
-      
-      Button searchPatternButton = new Button("Switch search pattern");
-      // searchPatternButton.setOnAction(new SwitchSearchPatternHandler());
-      
-      Label arrow = new Label("-->");
-      
-      fromToPane.getChildren().addAll(input1, arrow, input2, findPathButton, addConnectionButton);
-      
-      VBox bottomBox = new VBox();
-      bottomBox.getChildren().add(fromToPane);
-      root.setBottom(bottomBox);
+    stage.show();
   }
 
-    private void createListView() {
-      listView = new ListView<>();
-      listView.setPrefWidth(150);
-      ObservableList<String> nodeList = FXCollections.observableArrayList(graph.getNodes());
-      FXCollections.sort(nodeList);
-      listView.setItems(nodeList);
-      root.setLeft(listView);
-    }
+  private void createMenuBar() {
+    MenuBar menuBar = new MenuBar();
+    Menu fileMenu = new Menu("Route");
 
-    private void createNodeControls() {
-      nodeControls = new FlowPane();
+    MenuItem newItem = new MenuItem("New Route");
+    newItem.setOnAction(new NewHandler());
 
-      nodeControls.setPadding(new Insets(5));
-      nodeControls.setHgap(5);
+    MenuItem saveItem = new MenuItem("Save Route");
+    saveItem.setOnAction(new SaveHandler());
 
-      searchField = new TextField();
-      Button searchButton = new Button("Search");
+    MenuItem loadItem = new MenuItem("Load Route");
+    loadItem.setOnAction(new LoadHandler());
 
-      addButton = new Button("Add Node");
-      addButton.setOnAction(new AddHandler());
+    MenuItem exitItem = new MenuItem("Exit");
+    exitItem.setOnAction(new ExitHandler());
 
-      Button deleteButton = new Button("Delete Node");
-      deleteButton.setOnAction(new DeleteHandler());
+    fileMenu.getItems().addAll(newItem, saveItem, loadItem, exitItem);
 
-      Button loadImageButton = new Button("Load Image");
-      loadImageButton.setOnAction(new LoadImageHandler());
+    menuBar.getMenus().add(fileMenu);
+    root.setTop(menuBar);
+  }
 
-      nodeControls.getChildren().addAll(searchField, searchButton, addButton, deleteButton, loadImageButton);
-    }
+  private void createBottomControls() {
+    FlowPane fromToPane = new FlowPane();
+    fromToPane.setHgap(10);
 
-    private void createNodeArea(){
-      nodeArea = new Pane();
-      nodeArea.getChildren().add(nodeControls);
-      root.setCenter(nodeArea);
-    }
+    input1 = new TextField();
+    input1.setPromptText("Start node");
+    input1.setStyle("-fx-border-color: black");
 
-    private void setupListeners() {
-      listView.getSelectionModel().selectedItemProperty()
-          .addListener((ObservableValue<? extends String> observable, String oldValue, String newValue) -> {
-            addConnectionButton.setDisable(false);
-          });
-    }
+    input2 = new TextField();
+    input2.setPromptText("End node");
+    input2.setStyle("-fx-border-color: black");
 
-    private void setupStage(Stage stage, Scene scene) {
-      stage.setScene(scene);
-      stage.setOnCloseRequest(event -> {
-        if (!confirmUnsavedChanges()) {
-          event.consume();
-        }
-      });
-    }
+    Button addConnectionButton = new Button("Add Connection");
+    addConnectionButton.setOnAction(new AddConnectionHandler());
+
+    Button findPathButton = new Button("Find Path");
+    findPathButton.setOnAction(new FindPathHandler());
+
+    Button searchPatternButton = new Button("Switch search pattern");
+    // searchPatternButton.setOnAction(new SwitchSearchPatternHandler());
+
+    Label arrow = new Label("-->");
+
+    fromToPane.getChildren().addAll(input1, arrow, input2, findPathButton, addConnectionButton);
+
+    VBox bottomBox = new VBox();
+    bottomBox.getChildren().add(fromToPane);
+    root.setBottom(bottomBox);
+  }
+
+  private void createListView() {
+    listView = new ListView<>();
+    listView.setPrefWidth(150);
+    ObservableList<String> nodeList = FXCollections.observableArrayList(graph.getNodes());
+    FXCollections.sort(nodeList);
+    listView.setItems(nodeList);
+    root.setLeft(listView);
+  }
+
+  private void createNodeControls() {
+    nodeControls = new FlowPane();
+
+    nodeControls.setPadding(new Insets(5));
+    nodeControls.setHgap(5);
+
+    searchField = new TextField();
+    Button searchButton = new Button("Search");
+
+    addButton = new Button("Add Node");
+    addButton.setOnAction(new AddHandler());
+
+    Button deleteButton = new Button("Delete Node");
+    deleteButton.setOnAction(new DeleteHandler());
+
+    Button loadImageButton = new Button("Load Image");
+    loadImageButton.setOnAction(new LoadImageHandler());
+
+    nodeControls.getChildren().addAll(searchField, searchButton, addButton, deleteButton, loadImageButton);
+  }
+
+  private void createNodeArea() {
+    nodeArea = new Pane();
+    nodeArea.getChildren().add(nodeControls);
+    root.setCenter(nodeArea);
+  }
+
+  private void setupListeners() {
+    listView.getSelectionModel().selectedItemProperty()
+        .addListener((ObservableValue<? extends String> observable, String oldValue, String newValue) -> {
+          addConnectionButton.setDisable(false);
+        });
+  }
+
+  private void setupStage(Stage stage, Scene scene) {
+    stage.setScene(scene);
+    stage.setOnCloseRequest(event -> {
+      if (!confirmUnsavedChanges()) {
+        event.consume();
+      }
+    });
+  }
 
   public static void main(String[] args) {
     launch(args);
@@ -355,14 +350,6 @@ public class Gui extends Application {
     return result.isPresent() && result.get() == ButtonType.OK;
   }
 
-  private Set<Edge<String>> getAllEdges() {
-    Set<Edge<String>> lineSet = new HashSet<>();
-    for (var child : getAllLines()) {
-      lineSet.add(child.getLineEdge());
-    }
-    return lineSet;
-  }
-
   private Set<GuiEdgeLine> getAllLines() {
     Set<GuiEdgeLine> lineSet = new HashSet<>();
     for (var child : nodeArea.getChildren()) {
@@ -511,35 +498,27 @@ public class Gui extends Application {
         Alert alert = new Alert(Alert.AlertType.ERROR, "No node selected.");
         alert.showAndWait();
         return;
-      }
-      try {
-        graph.getEdgesFrom(selectedNode).stream().forEach((e) -> {
-          nodeArea.getChildren().remove(getLineByEdge(e));
-        });
+      } else {
+        try {
+          graph.getEdgesFrom(selectedNode).stream().forEach((e) -> {
+            nodeArea.getChildren().remove(getLineByEdge(e));
+            graph.getEdgesFrom(e.getDestination()).stream().forEach((eD) -> {
+            nodeArea.getChildren().remove(getLineByEdge(eD));
+          });
+          });
 
-        Set<Edge<String>> toBeRemoved = new HashSet<>();
+          graph.remove(selectedNode);
+          graph.getNodes().stream()
+              .forEach((n) -> graph.getEdgesFrom(n).stream().forEach((e) -> System.out.println("2 " + e)));
+          listView.getItems().remove(selectedNode);
+          nodeArea.getChildren().remove(getNodeByName(selectedNode));
 
-        getAllEdges().stream().forEach((k) -> {
-          if (k.getDestination().equals(selectedNode)) {
-            toBeRemoved.add(k);
-          }
-        });
+          unsavedChanges = true;
 
-        for (Edge<String> edge : toBeRemoved) {
-          nodeArea.getChildren().remove(getLineByEdge(edge));
+        } catch (NoSuchElementException e) {
+          Alert alert = new Alert(Alert.AlertType.ERROR, "Node does not exist.");
+          alert.showAndWait();
         }
-
-        graph.remove(selectedNode);
-        graph.getNodes().stream()
-            .forEach((n) -> graph.getEdgesFrom(n).stream().forEach((e) -> System.out.println("2 " + e)));
-        listView.getItems().remove(selectedNode);
-        nodeArea.getChildren().remove(getNodeByName(selectedNode));
-
-        unsavedChanges = true;
-
-      } catch (NoSuchElementException e) {
-        Alert alert = new Alert(Alert.AlertType.ERROR, "Node does not exist.");
-        alert.showAndWait();
       }
     }
   }
