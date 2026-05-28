@@ -65,7 +65,7 @@ public class Gui extends Application {
   private boolean unsavedChanges = false;
   private TextField input1;
   private TextField input2;
-  private final Map<Edge<String>, GuiEdgeLine> lineList = new HashMap<>();
+  private final Map<Edge<String>, GuiEdgeLine> edgeGUILineMap = new HashMap<>();
   private FlowPane nodeControls;
   private ImageView backgroundImageView;
 
@@ -209,7 +209,7 @@ public class Gui extends Application {
 
   private void createNewLine(Node node1, Node node2, Edge<String> edge) {
     GuiEdgeLine newLine = new GuiEdgeLine(edge);
-    lineList.put(edge, newLine);
+    edgeGUILineMap.put(edge, newLine);
     newLine.setStartX(node1.getLayoutX());
     newLine.setStartY(node1.getLayoutY());
     newLine.setEndX(node2.getLayoutX());
@@ -290,12 +290,12 @@ public class Gui extends Application {
       input1.clear();
       input2.clear();
       int totalWeight = 0;
-      for (GuiEdgeLine edgeLine : lineList.values()) {
+      for (GuiEdgeLine edgeLine : edgeGUILineMap.values()) {
         edgeLine.setStyle("-fx-stroke: black;");
       }
 
       for (Edge<String> edge : path.getEdges()) {
-        for (GuiEdgeLine edgeLine : lineList.values()) {
+        for (GuiEdgeLine edgeLine : edgeGUILineMap.values()) {
           if (edgeLine.getLineEdge().equals(edge)) {
             edgeLine.setStyle("-fx-stroke: red;");
             totalWeight += edge.getWeight();
@@ -344,19 +344,19 @@ public class Gui extends Application {
       }
       try {
         graph.getEdgesFrom(selectedNode).stream().forEach((e) -> {
-          nodeArea.getChildren().remove(lineList.remove(e));
+          nodeArea.getChildren().remove(edgeGUILineMap.remove(e));
         });
 
         Set<Edge<String>> toBeRemoved = new HashSet<>();
 
-        lineList.keySet().stream().forEach((k) -> {
+        edgeGUILineMap.keySet().stream().forEach((k) -> {
           if (k.getDestination().equals(selectedNode)) {
             toBeRemoved.add(k);
           }
         });
         
         for (Edge<String> edge : toBeRemoved) {
-          nodeArea.getChildren().remove(lineList.remove(edge));
+          nodeArea.getChildren().remove(edgeGUILineMap.remove(edge));
         }
         
         graph.remove(selectedNode);
@@ -381,7 +381,7 @@ public class Gui extends Application {
         nodeArea.getChildren().clear();
         nodeArea.getChildren().add(nodeControls);
         listView.getItems().clear();
-        lineList.clear();
+        edgeGUILineMap.clear();
 
         unsavedChanges = false;
       }
