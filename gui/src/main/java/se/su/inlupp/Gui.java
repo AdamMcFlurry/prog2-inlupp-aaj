@@ -8,9 +8,12 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
@@ -65,6 +68,8 @@ public class Gui extends Application {
   private FlowPane nodeControls;
   private ImageView backgroundImageView;
 
+  private Map<Edge<String>, GuiLine> edgeGuiLineMap = new HashMap<>();
+
   @Override
   public void start(Stage stage) {
     root = new BorderPane();
@@ -117,7 +122,7 @@ public class Gui extends Application {
     input2.setPromptText("End node");
     input2.setStyle("-fx-border-color: black");
 
-    Button addConnectionButton = new Button("Add Connection");
+    addConnectionButton = new Button("Add Connection");
     addConnectionButton.setOnAction(new AddConnectionHandler());
 
     Button findPathButton = new Button("Find Path");
@@ -230,7 +235,7 @@ public class Gui extends Application {
   private void loadTXT() {
     try {
       graph = new ListGraph<>();
-      String[] imagePathHolder = {imagePath};
+      String[] imagePathHolder = { imagePath };
 
       RouteFileManager.loadTXT(graph, nodeArea, nodeControls, imagePathHolder);
       imagePath = imagePathHolder[0];
@@ -240,7 +245,7 @@ public class Gui extends Application {
       listView.setItems(updatedList);
 
       unsavedChanges = false;
-      
+
     } catch (FileNotFoundException e) {
       Alert alert = new Alert(Alert.AlertType.ERROR, "route.txt not found");
       alert.showAndWait();
@@ -292,23 +297,8 @@ public class Gui extends Application {
     return result.isPresent() && result.get() == ButtonType.OK;
   }
 
-  private Set<GuiEdgeLine> getAllLines() {
-    Set<GuiEdgeLine> lineSet = new HashSet<>();
-    for (var child : nodeArea.getChildren()) {
-      if (child instanceof GuiEdgeLine) {
-        lineSet.add(((GuiEdgeLine) child));
-      }
-    }
-    return lineSet;
-  }
-
-  private GuiEdgeLine getLineByEdge(Edge<String> edge) {
-    for (GuiEdgeLine line : getAllLines()) {
-      if (line.getLineEdge().equals(edge)) {
-        return line;
-      }
-    }
-    return null;
+  private Collection<GuiLine> getAllLines() {
+    return Collections.unmodifiableCollection(edgeGuiLineMap.values());
   }
 
   class AddHandler implements EventHandler<ActionEvent> {
@@ -327,17 +317,19 @@ public class Gui extends Application {
       input1.clear();
       String node2 = input2.getText();
       input2.clear();
+
       TextInputDialog tiDialog = new TextInputDialog();
       tiDialog.setTitle("Connection Weight Input");
       tiDialog.setHeaderText("Enter the weight of the dialog: ");
       tiDialog.setContentText("Weight: ");
 
       Optional<String> result = tiDialog.showAndWait();
+
       if (result.isPresent()) {
         graph.connect(node1, node2, (node1 + " till " + node2), Integer.parseInt(result.get()));
-
-        GuiEdgeLine newLine = GuiEdgeLine.createNewLine(getNodeByName(node1), getNodeByName(node2),
-            graph.getEdgeBetween(node1, node2));
+        Edge<String> edgeBetween = graph.getEdgeBetween(node1, node2);
+        GuiLine newLine = new GuiLine(getNodeByName(node1), getNodeByName(node2), edgeBetween);
+        edgeGuiLineMap.put(edgeBetween, newLine);
         nodeArea.getChildren().add(newLine);
       }
     }
@@ -389,12 +381,12 @@ public class Gui extends Application {
       input1.clear();
       input2.clear();
       int totalWeight = 0;
-      for (GuiEdgeLine edgeLine : getAllLines()) {
+      for (GuiLine edgeLine : getAllLines()) {
         edgeLine.setStyle("-fx-stroke: black;");
       }
 
       for (Edge<String> edge : path.getEdges()) {
-        for (GuiEdgeLine edgeLine : getAllLines()) {
+        for (GuiLine edgeLine : getAllLines()) {
           if (edgeLine.getLineEdge().equals(edge)) {
             edgeLine.setStyle("-fx-stroke: red;");
             totalWeight += edge.getWeight();
@@ -443,15 +435,13 @@ public class Gui extends Application {
       } else {
         try {
           graph.getEdgesFrom(selectedNode).stream().forEach((e) -> {
-            nodeArea.getChildren().remove(getLineByEdge(e));
+            nodeArea.getChildren().remove(edgeGuiLineMap.remove(e));
             graph.getEdgesFrom(e.getDestination()).stream().forEach((eD) -> {
-            nodeArea.getChildren().remove(getLineByEdge(eD));
-          });
+              nodeArea.getChildren().remove(edgeGuiLineMap.remove(eD));
+            });
           });
 
           graph.remove(selectedNode);
-          graph.getNodes().stream()
-              .forEach((n) -> graph.getEdgesFrom(n).stream().forEach((e) -> System.out.println("2 " + e)));
           listView.getItems().remove(selectedNode);
           nodeArea.getChildren().remove(getNodeByName(selectedNode));
 
