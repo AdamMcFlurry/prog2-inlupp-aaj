@@ -9,10 +9,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
@@ -30,7 +28,16 @@ import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.scene.Cursor;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
+import javafx.scene.control.Menu;
+import javafx.scene.control.MenuBar;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.TextField;
+import javafx.scene.control.TextInputDialog;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
@@ -39,7 +46,6 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
-import javafx.scene.shape.Line;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
@@ -56,7 +62,6 @@ public class Gui extends Application {
   private boolean unsavedChanges = false;
   private TextField input1;
   private TextField input2;
-  private final Map<Edge<String>, GuiEdgeLine> edgeGUILineMap = new HashMap<>();
   private FlowPane nodeControls;
   private ImageView backgroundImageView;
 
@@ -124,7 +129,7 @@ public class Gui extends Application {
       findPathButton.setOnAction(new FindPathHandler());
       
       Button searchPatternButton = new Button("Switch search pattern");
-      searchPatternButton.setOnAction(new SwitchSearchPatternHandler());
+      // searchPatternButton.setOnAction(new SwitchSearchPatternHandler());
       
       Label arrow = new Label("-->");
       
@@ -286,7 +291,6 @@ public class Gui extends Application {
 
         Edge<String> guiEdge = graph.getEdgeBetween(from, to);
         GuiEdgeLine newLine = GuiEdgeLine.createNewLine(startNode, endNode, guiEdge);
-        edgeGUILineMap.put(guiEdge, newLine);
         nodeArea.getChildren().add(newLine);
 
         ObservableList<String> updatedList = FXCollections.observableArrayList(graph.getNodes());
@@ -340,6 +344,7 @@ public class Gui extends Application {
     if (!unsavedChanges) {
       return true;
     }
+
     Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
     alert.setTitle("Unsaved changes");
     alert.setHeaderText("You have unsaved changes.");
@@ -350,14 +355,31 @@ public class Gui extends Application {
     return result.isPresent() && result.get() == ButtonType.OK;
   }
 
-  private Set<Edge<String>> getAllLines() {
+  private Set<Edge<String>> getAllEdges() {
     Set<Edge<String>> lineSet = new HashSet<>();
+    for (var child : getAllLines()) {
+      lineSet.add(child.getLineEdge());
+    }
+    return lineSet;
+  }
+
+  private Set<GuiEdgeLine> getAllLines() {
+    Set<GuiEdgeLine> lineSet = new HashSet<>();
     for (var child : nodeArea.getChildren()) {
       if (child instanceof GuiEdgeLine) {
-        lineSet.add(((GuiEdgeLine) child).getLineEdge());
+        lineSet.add(((GuiEdgeLine) child));
       }
     }
     return lineSet;
+  }
+
+  private GuiEdgeLine getLineByEdge(Edge<String> edge) {
+    for (GuiEdgeLine line : getAllLines()) {
+      if (line.getLineEdge().equals(edge)) {
+        return line;
+      }
+    }
+    return null;
   }
 
   class AddHandler implements EventHandler<ActionEvent> {
@@ -387,7 +409,6 @@ public class Gui extends Application {
 
         GuiEdgeLine newLine = GuiEdgeLine.createNewLine(getNodeByName(node1), getNodeByName(node2),
             graph.getEdgeBetween(node1, node2));
-        edgeGUILineMap.put(graph.getEdgeBetween(node1, node2), newLine);
         nodeArea.getChildren().add(newLine);
       }
     }
@@ -439,12 +460,12 @@ public class Gui extends Application {
       input1.clear();
       input2.clear();
       int totalWeight = 0;
-      for (GuiEdgeLine edgeLine : edgeGUILineMap.values()) {
+      for (GuiEdgeLine edgeLine : getAllLines()) {
         edgeLine.setStyle("-fx-stroke: black;");
       }
 
       for (Edge<String> edge : path.getEdges()) {
-        for (GuiEdgeLine edgeLine : edgeGUILineMap.values()) {
+        for (GuiEdgeLine edgeLine : getAllLines()) {
           if (edgeLine.getLineEdge().equals(edge)) {
             edgeLine.setStyle("-fx-stroke: red;");
             totalWeight += edge.getWeight();
@@ -493,19 +514,19 @@ public class Gui extends Application {
       }
       try {
         graph.getEdgesFrom(selectedNode).stream().forEach((e) -> {
-          nodeArea.getChildren().remove(edgeGUILineMap.remove(e));
+          nodeArea.getChildren().remove(getLineByEdge(e));
         });
 
         Set<Edge<String>> toBeRemoved = new HashSet<>();
 
-        edgeGUILineMap.keySet().stream().forEach((k) -> {
+        getAllEdges().stream().forEach((k) -> {
           if (k.getDestination().equals(selectedNode)) {
             toBeRemoved.add(k);
           }
         });
 
         for (Edge<String> edge : toBeRemoved) {
-          nodeArea.getChildren().remove(edgeGUILineMap.remove(edge));
+          nodeArea.getChildren().remove(getLineByEdge(edge));
         }
 
         graph.remove(selectedNode);
@@ -530,7 +551,6 @@ public class Gui extends Application {
         nodeArea.getChildren().clear();
         nodeArea.getChildren().add(nodeControls);
         listView.getItems().clear();
-        edgeGUILineMap.clear();
 
         unsavedChanges = false;
       }
