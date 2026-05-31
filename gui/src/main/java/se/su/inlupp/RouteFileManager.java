@@ -97,9 +97,7 @@ public class RouteFileManager {
 
             GuiNode startNode = nodeMap.get(from);
             GuiNode endNode = nodeMap.get(to);
-
-            Edge<String> guiEdge = graph.getEdgeBetween(from, to);
-            GuiLine newLine = new GuiLine(startNode, endNode, guiEdge);
+            GuiLine newLine = new GuiLine(startNode, endNode);
             nodeArea.getChildren().add(newLine);
         }
     }
