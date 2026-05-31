@@ -300,11 +300,13 @@ public class Gui extends Application {
       tiDialog.setContentText("Weight: ");
 
       Optional<String> result = tiDialog.showAndWait();
+      int edgeWeight = Integer.parseInt(result.get());
 
       if (result.isPresent()) {
-        graph.connect(node1, node2, (node1 + " till " + node2), Integer.parseInt(result.get()));
+        graph.connect(node1, node2, (node1 + " till " + node2), edgeWeight);
         Edge<String> edgeBetween = graph.getEdgeBetween(node1, node2);
-        GuiLine newLine = new GuiLine(nodeMap.get(node1), nodeMap.get(node2), edgeBetween);
+        
+        GuiLine newLine = new GuiLine(nodeMap.get(node1), nodeMap.get(node2));
         edgeGuiLineMap.put(edgeBetween, newLine);
         nodeArea.getChildren().add(newLine);
       }
