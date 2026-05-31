@@ -89,13 +89,25 @@ public class Gui extends Application {
     newItem.setOnAction(new NewHandler());
 
     MenuItem saveItem = new MenuItem("Save Route");
-    saveItem.setOnAction(new SaveHandler());
+    saveItem.setOnAction((e) -> {
+      savePNG();
+      saveTXT();
+    });
 
     MenuItem loadItem = new MenuItem("Load Route");
-    loadItem.setOnAction(new LoadHandler());
+    loadItem.setOnAction((e) -> {
+      if (confirmUnsavedChanges()) {
+        loadTXT();
+        loadPNG();
+      }
+    });
 
     MenuItem exitItem = new MenuItem("Exit");
-    exitItem.setOnAction(new ExitHandler());
+    exitItem.setOnAction((e) -> {
+      if (confirmUnsavedChanges()) {
+        Platform.exit();
+      }
+    });
 
     fileMenu.getItems().addAll(newItem, saveItem, loadItem, exitItem);
 
@@ -149,7 +161,6 @@ public class Gui extends Application {
     nodeControls.setHgap(5);
 
     searchField = new TextField();
-    Button searchButton = new Button("Search");
 
     addButton = new Button("Add Node");
     addButton.setOnAction(new AddHandler());
@@ -160,7 +171,7 @@ public class Gui extends Application {
     Button loadImageButton = new Button("Load Image");
     loadImageButton.setOnAction(new LoadImageHandler());
 
-    nodeControls.getChildren().addAll(searchField, searchButton, addButton, deleteButton, loadImageButton);
+    nodeControls.getChildren().addAll(searchField, addButton, deleteButton, loadImageButton);
   }
 
   private void createNodeArea() {
@@ -378,7 +389,7 @@ public class Gui extends Application {
       Path<String> path = graphModel.getPath(input1.getText(), input2.getText());
       input1.clear();
       input2.clear();
-      
+
       for (GuiLine edgeLine : edgeGuiLineMap.values()) {
         edgeLine.setStyle("-fx-stroke: black;");
       }
@@ -476,30 +487,6 @@ public class Gui extends Application {
         listView.getItems().clear();
 
         unsavedChanges = false;
-      }
-    }
-  }
-
-  class SaveHandler implements EventHandler<ActionEvent> {
-    public void handle(ActionEvent event) {
-      savePNG();
-      saveTXT();
-    }
-  }
-
-  class LoadHandler implements EventHandler<ActionEvent> {
-    public void handle(ActionEvent event) {
-      if (confirmUnsavedChanges()) {
-        loadTXT();
-        loadPNG();
-      }
-    }
-  }
-
-  class ExitHandler implements EventHandler<ActionEvent> {
-    public void handle(ActionEvent event) {
-      if (confirmUnsavedChanges()) {
-        Platform.exit();
       }
     }
   }
