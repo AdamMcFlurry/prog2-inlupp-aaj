@@ -439,16 +439,10 @@ public class Gui extends Application {
       }
 
       try {
-        graph.getEdgesFrom(selectedNode).stream().forEach((e) -> {
-          nodeArea.getChildren().removeAll(edgeGuiLineMap.remove(e));
-          
-          graph.getEdgesFrom(e.getDestination()).stream().forEach((eD) -> {
-            nodeArea.getChildren().remove(edgeGuiLineMap.remove(eD));
-          });
+        for (Edge<String> edge : graphModel.deleteNode(selectedNode)) {
+          nodeArea.getChildren().removeAll(edgeGuiLineMap.remove(edge));
+        }
         
-        });
-
-        graphModel.removeNode(selectedNode);
         listView.getItems().remove(selectedNode);
         nodeArea.getChildren().remove(nodeMap.get(selectedNode));
 

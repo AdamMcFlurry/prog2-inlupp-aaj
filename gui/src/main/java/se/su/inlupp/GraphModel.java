@@ -31,20 +31,16 @@ public class GraphModel {
         graph.add(node);
     }
 
-    public void removeNode(String node) {
-        graph.remove(node);
-    }
-
     public Set<Edge<String>> deleteNode(String node) {
         Set<Edge<String>> toBeDeletedList = new HashSet<>();
-        
         Collection<Edge<String>> nodeEdges = graph.getEdgesFrom(node);
         
         for (Edge<String> edge : nodeEdges) {
             toBeDeletedList.addAll(graph.getEdgesFrom(edge.getDestination()));
         }
-
+        
         toBeDeletedList.addAll(graph.getEdgesFrom(node));
+        graph.remove(node);
         return toBeDeletedList;
     }
 }
