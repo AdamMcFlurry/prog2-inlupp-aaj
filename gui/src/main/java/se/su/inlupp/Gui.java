@@ -188,7 +188,7 @@ public class Gui extends Application {
 
   private void saveTXT() {
     try {
-      RouteFileManager.saveTXT(graphModel.getGraph(), nodeMap, imagePath);
+      RouteFileManager.saveTXT(graphModel, nodeMap, imagePath);
       unsavedChanges = false;
 
     } catch (Exception e) {
@@ -221,7 +221,7 @@ public class Gui extends Application {
 
       nodeArea.getChildren().add(nodeControls);
 
-      RouteData routeData = RouteFileManager.loadTXT(graphModel.getGraph());
+      RouteData routeData = RouteFileManager.loadTXT(graphModel);
 
       imagePath = routeData.getImagePath();
 
@@ -459,7 +459,6 @@ public class Gui extends Application {
         alert.showAndWait();
         return;
       }
-
       try {
         for (Edge<String> edge : graphModel.deleteNode(selectedNode)) {
           nodeArea.getChildren().removeAll(edgeGuiLineMap.remove(edge));
@@ -474,7 +473,6 @@ public class Gui extends Application {
         Alert alert = new Alert(Alert.AlertType.ERROR, "Node does not exist.");
         alert.showAndWait();
       }
-
     }
   }
 
