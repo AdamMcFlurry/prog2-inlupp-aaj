@@ -1,20 +1,26 @@
 package se.su.inlupp;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
 public class GraphModel {
     private Graph<String> graph;
+    private PathFinder<String> pathFinder;
 
     public GraphModel() {
         graph = new ListGraph<>();
+        pathFinder = new BFSPathFinder<>();
+    }
+    public void setPathFinder(PathFinder<String> pf) { 
+        this.pathFinder = pf; 
+    }
+    
+    public Path<String> getPath(String start, String goal) {
+        return pathFinder.findPath(graph, start, goal);
     }
 
     public Edge<String> connectNodes(String node1, String node2, int edgeWeight)  {
@@ -38,8 +44,9 @@ public class GraphModel {
         for (Edge<String> edge : nodeEdges) {
             toBeDeletedList.addAll(graph.getEdgesFrom(edge.getDestination()));
         }
-        
+
         toBeDeletedList.addAll(graph.getEdgesFrom(node));
+        
         graph.remove(node);
         return toBeDeletedList;
     }

@@ -3,7 +3,6 @@ package se.su.inlupp;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -56,8 +55,8 @@ public class Gui extends Application {
   private TextField input2;
   private FlowPane nodeControls;
   private ImageView backgroundImageView;
-  private PathFinder<String> currentPathFinder = new BFSPathFinder<>();
-  private String currentAlgorithm = "BFS";
+  private PFType currentPFAlgorithm = PFType.BFS;
+  private Button searchPatternButton;
 
   private Map<Edge<String>, GuiLine> edgeGuiLineMap = new HashMap<>();
   private Map<String, GuiNode> nodeMap = new HashMap<>();
@@ -120,8 +119,8 @@ public class Gui extends Application {
     Button findPathButton = new Button("Find Path");
     findPathButton.setOnAction(new FindPathHandler());
 
-    Button searchPatternButton = new Button("Switch search pattern");
-    searchPatternButton.setOnAction(new SwitchSearchPatternHandler(searchPatternButton));
+    searchPatternButton = new Button("Switch to DFS");
+    searchPatternButton.setOnAction(new SwitchSearchPatternHandler());
 
     Label arrow = new Label("-->");
 
@@ -356,7 +355,7 @@ public class Gui extends Application {
   class FindPathHandler implements EventHandler<ActionEvent> {
     @Override
     public void handle(ActionEvent event) {
-      Path<String> path = currentPathFinder.findPath(graph, input1.getText(), input2.getText());
+      Path<String> path = graphModel.getPath(input1.getText(), input2.getText());
       input1.clear();
       input2.clear();
       int totalWeight = 0;
@@ -380,26 +379,20 @@ public class Gui extends Application {
   }
 
   class SwitchSearchPatternHandler implements EventHandler<ActionEvent> {
-    private final Button button;
-
-    public SwitchSearchPatternHandler(Button button) {
-      this.button = button;
-    }
-
     @Override
     public void handle(ActionEvent event) {
-      if (currentPathFinder instanceof BFSPathFinder) {
-        currentPathFinder = new DFSPathFinder<>();
-        currentAlgorithm = "DFS";
-        button.setText("Switch to BFS");
-      } else {
-        currentPathFinder = new BFSPathFinder<>();
-        currentAlgorithm = "BFS";
-        button.setText("Switch to DFS");
+      switch (currentPFAlgorithm) {
+        case BFS:
+          graphModel.setPathFinder(new DFSPathFinder<>());
+          currentPFAlgorithm = PFType.DFS;
+          searchPatternButton.setText("Switch to BFS");
+          break;
+        case DFS:
+          graphModel.setPathFinder(new BFSPathFinder<>());
+          currentPFAlgorithm = PFType.BFS;
+          searchPatternButton.setText("Switch to DFS");
+          break;
       }
-
-      Alert alert = new Alert(Alert.AlertType.INFORMATION, "Current algorithm: " + currentAlgorithm);
-      alert.showAndWait();
     }
   }
 
@@ -442,7 +435,7 @@ public class Gui extends Application {
         for (Edge<String> edge : graphModel.deleteNode(selectedNode)) {
           nodeArea.getChildren().removeAll(edgeGuiLineMap.remove(edge));
         }
-        
+
         listView.getItems().remove(selectedNode);
         nodeArea.getChildren().remove(nodeMap.get(selectedNode));
 
