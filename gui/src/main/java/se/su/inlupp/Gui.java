@@ -1,5 +1,10 @@
 package se.su.inlupp;
 
+// PROG2 VT2026, Inlämningsuppgift, del 1
+// Adam McCarthy - admc0801
+// Joakim Lindé - joli3174
+// Arvid Flodin - arfl0534
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -11,7 +16,6 @@ import java.util.Optional;
 
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;

@@ -1,5 +1,10 @@
 package se.su.inlupp;
 
+// PROG2 VT2026, Inlämningsuppgift, del 1
+// Adam McCarthy - admc0801
+// Joakim Lindé - joli3174
+// Arvid Flodin - arfl0534
+
 import java.util.*;
 
 public class ListGraph<T> implements Graph<T> {
@@ -15,7 +20,6 @@ public class ListGraph<T> implements Graph<T> {
     if (!hasNode(node)) throw new NoSuchElementException();
     
     nodeEdgeMap.remove(node);
-    //Behövs ett Set här i mappen?
     Map<T, Edge<T>> toBeRemoved = new HashMap<>();
     
     for (Map.Entry<T, Set<Edge<T>>> i : nodeEdgeMap.entrySet()) {

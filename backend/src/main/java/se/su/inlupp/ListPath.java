@@ -1,12 +1,16 @@
 package se.su.inlupp;
 
+// PROG2 VT2026, Inlämningsuppgift, del 1
+// Adam McCarthy - admc0801
+// Joakim Lindé - joli3174
+// Arvid Flodin - arfl0534
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
 public class ListPath<T> implements Path<T> {
     private final List<Edge<T>> edgeList = new ArrayList<>();
-    //får start vara en variable här
     private final T start;
 
     public ListPath(T start, List<Edge<T>> edges) {
