@@ -2,13 +2,9 @@ package se.su.inlupp;
 
 import javafx.scene.shape.Line;
 
-//necessary?
+//behövs förmodligen inte
 public class GuiLine extends Line {
-    private final Edge<String> lineEdge;
-
-    public GuiLine(GuiNode node1, GuiNode node2, Edge<String> lineEdge) {
-      this.lineEdge = lineEdge;
-      
+    public GuiLine(GuiNode node1, GuiNode node2) {
       double layoutX = node1.getLayoutX();
       double layoutY = node1.getLayoutY();
 
@@ -23,11 +19,6 @@ public class GuiLine extends Line {
       
       endXProperty().bind(node2.layoutXProperty());
       endYProperty().bind(node2.layoutYProperty());
-    }
-
-    //remove
-    public Edge<String> getLineEdge() {
-      return lineEdge;
     }
 
   }
