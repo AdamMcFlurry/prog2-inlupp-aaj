@@ -15,8 +15,8 @@ public class GraphModel {
         graph = new ListGraph<>();
         pathFinder = new BFSPathFinder<>();
     }
-    public void setPathFinder(PathFinder<String> pf) { 
-        this.pathFinder = pf; 
+    public void setPathFinder(PathFinder<String> pf) {
+        this.pathFinder = pf;
     }
     
     public Path<String> getPath(String start, String goal) {
@@ -49,5 +49,12 @@ public class GraphModel {
         
         graph.remove(node);
         return toBeDeletedList;
+    }
+
+    public Graph<String> getGraph() {
+        return graph;
+    }
+    public void clearGraph() {
+        graph = new ListGraph<>();
     }
 }

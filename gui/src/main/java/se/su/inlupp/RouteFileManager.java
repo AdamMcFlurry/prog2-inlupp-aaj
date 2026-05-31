@@ -55,51 +55,40 @@ public class RouteFileManager {
         writer.close();
     }
 
-    public static void loadTXT(Graph<String> graph, Pane nodeArea, Map<String, GuiNode> nodeMap, FlowPane nodeControls, String[] imagePathHolder)
-            throws IOException {
-        nodeArea.getChildren().clear();
-        nodeMap.clear();
-        nodeArea.getChildren().add(nodeControls);
+    public static RouteData loadTXT(Graph<String> graph)throws IOException {
+
+        RouteData routeData = new RouteData();
         FileReader fileReader = new FileReader("route.txt");
         BufferedReader reader = new BufferedReader(fileReader);
-        List<String[]> edgeList = new ArrayList<>();
 
         String line;
 
         while ((line = reader.readLine()) != null) {
             if (line.startsWith("IMAGE:")) {
-                imagePathHolder[0] = line.substring(6);
+                routeData.setImagePath(line.substring(6));
             } else if (line.startsWith("NODE:")) {
                 String[] parts = line.split(":");
                 String nodeName = parts[1];
                 double x = Double.parseDouble(parts[2]);
                 double y = Double.parseDouble(parts[3]);
                 graph.add(nodeName);
-                GuiNode visualNode = new GuiNode(x, y, nodeName);
-                nodeMap.put(nodeName, visualNode);
-                nodeArea.getChildren().add(visualNode);
+                routeData.getNodes().put(nodeName, new double[] {x, y});
             } else if (line.startsWith("EDGE:")) {
                 String[] parts = line.split(":");
-                edgeList.add(parts);
+                String from = parts[1];
+                String to = parts[2];
+                String name = parts[3];
+                int weight = Integer.parseInt(parts[4]);
+
+                graph.connect(from, to, name, weight);
+                
+                routeData.getEdges().add(parts);
             }
         }
         reader.close();
         fileReader.close();
-        for (String[] edge : edgeList) {
-            String from = edge[1];
-            String to = edge[2];
-            String name = edge[3];
-            int weight = Integer.parseInt(edge[4]);
 
-            if (graph.getEdgeBetween(from, to) == null) {
-                graph.connect(from, to, name, weight);
-            }
-
-            GuiNode startNode = nodeMap.get(from);
-            GuiNode endNode = nodeMap.get(to);
-            GuiLine newLine = new GuiLine(startNode, endNode);
-            nodeArea.getChildren().add(newLine);
-        }
+        return routeData;
     }
 
     public static void savePNG(Pane nodeArea) throws IOException {

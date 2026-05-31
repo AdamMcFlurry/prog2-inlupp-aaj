@@ -43,7 +43,6 @@ public class Gui extends Application {
 
   private Pane nodeArea;
   private TextField searchField;
-  private Graph<String> graph = new ListGraph<>();
   private GraphModel graphModel = new GraphModel();
   private ListView<String> listView;
   private Button addButton;
@@ -189,7 +188,7 @@ public class Gui extends Application {
 
   private void saveTXT() {
     try {
-      RouteFileManager.saveTXT(graph, nodeMap, imagePath);
+      RouteFileManager.saveTXT(graphModel.getGraph(), nodeMap, imagePath);
       unsavedChanges = false;
 
     } catch (Exception e) {
@@ -215,11 +214,41 @@ public class Gui extends Application {
 
   private void loadTXT() {
     try {
-      graph = new ListGraph<>();
-      String[] imagePathHolder = { imagePath };
+      graphModel.clearGraph();
+      nodeArea.getChildren().clear();
+      nodeMap.clear();
+      edgeGuiLineMap.clear();
 
-      RouteFileManager.loadTXT(graph, nodeArea, nodeMap, nodeControls, imagePathHolder);
-      imagePath = imagePathHolder[0];
+      nodeArea.getChildren().add(nodeControls);
+
+      RouteData routeData = RouteFileManager.loadTXT(graphModel.getGraph());
+
+      imagePath = routeData.getImagePath();
+
+      for (Map.Entry<String, double[]> entry : routeData.getNodes().entrySet()) {
+        String nodeName = entry.getKey();
+
+        double x = entry.getValue()[0];
+        double y = entry.getValue()[1];
+
+        GuiNode guiNode = new GuiNode(x, y, nodeName);
+        nodeMap.put(nodeName, guiNode);
+        nodeArea.getChildren().add(guiNode);
+      }
+
+      for (String[] edge : routeData.getEdges()) {
+        String from = edge[1];
+        String to = edge[2];
+
+        GuiNode startNode = nodeMap.get(from);
+        GuiNode endNode = nodeMap.get(to);
+
+        GuiLine guiLine = new GuiLine(startNode, endNode);
+
+        Edge<String> graphEdge = graphModel.getGraph().getEdgeBetween(from, to);
+        edgeGuiLineMap.put(graphEdge, guiLine);
+        nodeArea.getChildren().add(guiLine);
+      }
 
       ObservableList<String> updatedList = graphModel.getGraphNodes();
       FXCollections.sort(updatedList);
@@ -452,7 +481,7 @@ public class Gui extends Application {
   class NewHandler implements EventHandler<ActionEvent> {
     public void handle(ActionEvent event) {
       if (confirmUnsavedChanges()) {
-        graph = new ListGraph<>();
+        graphModel.clearGraph();
         nodeArea.getChildren().clear();
         nodeArea.getChildren().add(nodeControls);
         listView.getItems().clear();
