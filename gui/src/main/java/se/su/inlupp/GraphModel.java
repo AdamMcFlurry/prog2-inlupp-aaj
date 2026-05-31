@@ -2,10 +2,8 @@ package se.su.inlupp;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
-
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 
 public class GraphModel {
     private Graph<String> graph;
@@ -23,14 +21,17 @@ public class GraphModel {
         return pathFinder.findPath(graph, start, goal);
     }
 
-    public Edge<String> connectNodes(String node1, String node2, int edgeWeight)  {
+    public void connectNodes(String node1, String node2, int edgeWeight, Map<Edge<String>, GuiLine> map, GuiLine line)  {
         graph.connect(node1, node2, (node1 + " till " + node2), edgeWeight);
-        Edge<String> edgeBetween = graph.getEdgeBetween(node1, node2);
-        return edgeBetween;
+        Edge<String> firstEdgeBetween = graph.getEdgeBetween(node1, node2);
+        Edge<String> secondEdgeBetween = graph.getEdgeBetween(node2, node1);
+        
+        map.put(firstEdgeBetween, line);
+        map.put(secondEdgeBetween, line);
     }
 
-    public ObservableList<String> getGraphNodes() {
-        return FXCollections.observableArrayList(graph.getNodes());
+    public Set<String> getGraphNodes() {
+        return graph.getNodes();
     }
 
     public void addNode(String node) {

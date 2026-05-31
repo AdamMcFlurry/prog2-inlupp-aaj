@@ -69,13 +69,16 @@ public class Gui extends Application {
     createListView();
     createNodeControls();
     createNodeArea();
-    setupListeners();
 
     Scene scene = new Scene(root, 740, 580);
 
     setupStage(stage, scene);
 
     stage.show();
+  }
+
+  public static void main(String[] args) {
+    launch(args);
   }
 
   private void createMenuBar() {
@@ -133,7 +136,7 @@ public class Gui extends Application {
   private void createListView() {
     listView = new ListView<>();
     listView.setPrefWidth(150);
-    ObservableList<String> nodeList = graphModel.getGraphNodes();
+    ObservableList<String> nodeList = FXCollections.observableArrayList(graphModel.getGraphNodes());
     FXCollections.sort(nodeList);
     listView.setItems(nodeList);
     root.setLeft(listView);
@@ -166,13 +169,6 @@ public class Gui extends Application {
     root.setCenter(nodeArea);
   }
 
-  private void setupListeners() {
-    listView.getSelectionModel().selectedItemProperty()
-        .addListener((ObservableValue<? extends String> observable, String oldValue, String newValue) -> {
-          addConnectionButton.setDisable(false);
-        });
-  }
-
   private void setupStage(Stage stage, Scene scene) {
     stage.setScene(scene);
     stage.setOnCloseRequest(event -> {
@@ -180,10 +176,6 @@ public class Gui extends Application {
         event.consume();
       }
     });
-  }
-
-  public static void main(String[] args) {
-    launch(args);
   }
 
   private void saveTXT() {
@@ -250,7 +242,7 @@ public class Gui extends Application {
         nodeArea.getChildren().add(guiLine);
       }
 
-      ObservableList<String> updatedList = graphModel.getGraphNodes();
+      ObservableList<String> updatedList = FXCollections.observableArrayList(graphModel.getGraphNodes());
       FXCollections.sort(updatedList);
       listView.setItems(updatedList);
 
@@ -333,10 +325,9 @@ public class Gui extends Application {
       int edgeWeight = Integer.parseInt(result.get());
 
       if (result.isPresent()) {
-        Edge<String> edgeBetween = graphModel.connectNodes(node1, node2, edgeWeight);
         GuiLine newLine = new GuiLine(nodeMap.get(node1), nodeMap.get(node2));
+        graphModel.connectNodes(node1, node2, edgeWeight, edgeGuiLineMap, newLine);
 
-        edgeGuiLineMap.put(edgeBetween, newLine);
         nodeArea.getChildren().add(newLine);
       }
       unsavedChanges = true;
@@ -387,7 +378,7 @@ public class Gui extends Application {
       Path<String> path = graphModel.getPath(input1.getText(), input2.getText());
       input1.clear();
       input2.clear();
-      int totalWeight = 0;
+      
       for (GuiLine edgeLine : edgeGuiLineMap.values()) {
         edgeLine.setStyle("-fx-stroke: black;");
       }
@@ -396,13 +387,11 @@ public class Gui extends Application {
         for (GuiLine edgeLine : edgeGuiLineMap.values()) {
           if (edgeGuiLineMap.get(edge).equals(edgeLine)) {
             edgeLine.setStyle("-fx-stroke: red;");
-            totalWeight += edge.getWeight();
-
           }
         }
       }
 
-      Alert alert = new Alert(Alert.AlertType.INFORMATION, "The total weight of the path is " + totalWeight);
+      Alert alert = new Alert(Alert.AlertType.INFORMATION, "The total weight of the path is " + path.getTotalWeight());
       alert.showAndWait();
     }
   }
