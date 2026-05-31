@@ -45,6 +45,7 @@ public class Gui extends Application {
   private Pane nodeArea;
   private TextField searchField;
   private Graph<String> graph = new ListGraph<>();
+  private GraphModel graphModel = new GraphModel();
   private ListView<String> listView;
   private Button addButton;
   private BorderPane root;
@@ -134,7 +135,7 @@ public class Gui extends Application {
   private void createListView() {
     listView = new ListView<>();
     listView.setPrefWidth(150);
-    ObservableList<String> nodeList = FXCollections.observableArrayList(graph.getNodes());
+    ObservableList<String> nodeList = graphModel.getGraphNodes();
     FXCollections.sort(nodeList);
     listView.setItems(nodeList);
     root.setLeft(listView);
@@ -221,7 +222,7 @@ public class Gui extends Application {
       RouteFileManager.loadTXT(graph, nodeArea, nodeMap, nodeControls, imagePathHolder);
       imagePath = imagePathHolder[0];
 
-      ObservableList<String> updatedList = FXCollections.observableArrayList(graph.getNodes());
+      ObservableList<String> updatedList = graphModel.getGraphNodes();
       FXCollections.sort(updatedList);
       listView.setItems(updatedList);
 
@@ -304,10 +305,9 @@ public class Gui extends Application {
       int edgeWeight = Integer.parseInt(result.get());
 
       if (result.isPresent()) {
-        graph.connect(node1, node2, (node1 + " till " + node2), edgeWeight);
-        Edge<String> edgeBetween = graph.getEdgeBetween(node1, node2);
-        
+        Edge<String> edgeBetween = graphModel.connectNodes(node1, node2, edgeWeight);
         GuiLine newLine = new GuiLine(nodeMap.get(node1), nodeMap.get(node2));
+
         edgeGuiLineMap.put(edgeBetween, newLine);
         nodeArea.getChildren().add(newLine);
       }
@@ -409,7 +409,7 @@ public class Gui extends Application {
       double y = event.getY();
 
       String nodeName = searchField.getText();
-      graph.add(nodeName);
+      graphModel.addNode(nodeName);
 
       int index = Collections.binarySearch((listView.getItems()), nodeName);
       if (index < 0) {
@@ -436,26 +436,29 @@ public class Gui extends Application {
         Alert alert = new Alert(Alert.AlertType.ERROR, "No node selected.");
         alert.showAndWait();
         return;
-      } else {
-        try {
-          graph.getEdgesFrom(selectedNode).stream().forEach((e) -> {
-            nodeArea.getChildren().remove(edgeGuiLineMap.remove(e));
-            graph.getEdgesFrom(e.getDestination()).stream().forEach((eD) -> {
-              nodeArea.getChildren().remove(edgeGuiLineMap.remove(eD));
-            });
-          });
-
-          graph.remove(selectedNode);
-          listView.getItems().remove(selectedNode);
-          nodeArea.getChildren().remove(nodeMap.get(selectedNode));
-
-          unsavedChanges = true;
-
-        } catch (NoSuchElementException e) {
-          Alert alert = new Alert(Alert.AlertType.ERROR, "Node does not exist.");
-          alert.showAndWait();
-        }
       }
+
+      try {
+        graph.getEdgesFrom(selectedNode).stream().forEach((e) -> {
+          nodeArea.getChildren().removeAll(edgeGuiLineMap.remove(e));
+          
+          graph.getEdgesFrom(e.getDestination()).stream().forEach((eD) -> {
+            nodeArea.getChildren().remove(edgeGuiLineMap.remove(eD));
+          });
+        
+        });
+
+        graphModel.removeNode(selectedNode);
+        listView.getItems().remove(selectedNode);
+        nodeArea.getChildren().remove(nodeMap.get(selectedNode));
+
+        unsavedChanges = true;
+
+      } catch (NoSuchElementException e) {
+        Alert alert = new Alert(Alert.AlertType.ERROR, "Node does not exist.");
+        alert.showAndWait();
+      }
+
     }
   }
 
