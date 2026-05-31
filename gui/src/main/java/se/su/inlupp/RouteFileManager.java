@@ -52,7 +52,7 @@ public class RouteFileManager {
         writer.close();
     }
 
-    public static RouteData loadTXT(GraphModel graphModel)throws IOException {
+    public static RouteData loadTXT(GraphModel graphModel) throws IOException {
 
         RouteData routeData = new RouteData();
         FileReader fileReader = new FileReader("route.txt");
@@ -69,15 +69,10 @@ public class RouteFileManager {
                 double x = Double.parseDouble(parts[2]);
                 double y = Double.parseDouble(parts[3]);
                 graphModel.addNode(nodeName);
-                routeData.getNodes().put(nodeName, new double[] {x, y});
+                routeData.getNodes().put(nodeName, new double[] { x, y });
             } else if (line.startsWith("EDGE:")) {
                 String[] parts = line.split(":");
-                String from = parts[1];
-                String to = parts[2];
-                int weight = Integer.parseInt(parts[4]);
 
-                graphModel.connectNodes(from, to, weight);
-                
                 routeData.getEdges().add(parts);
             }
         }

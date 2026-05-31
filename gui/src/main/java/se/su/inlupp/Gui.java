@@ -242,14 +242,14 @@ public class Gui extends Application {
       for (String[] edge : routeData.getEdges()) {
         String from = edge[1];
         String to = edge[2];
+        int weight = Integer.parseInt(edge[4]);
 
         GuiNode startNode = nodeMap.get(from);
         GuiNode endNode = nodeMap.get(to);
 
         GuiLine guiLine = new GuiLine(startNode, endNode);
 
-        Edge<String> graphEdge = graphModel.getGraph().getEdgeBetween(from, to);
-        edgeGuiLineMap.put(graphEdge, guiLine);
+        graphModel.connectNodes(from, to, weight, edgeGuiLineMap, guiLine);
         nodeArea.getChildren().add(guiLine);
       }
 
