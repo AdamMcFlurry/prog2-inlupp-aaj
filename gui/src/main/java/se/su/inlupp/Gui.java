@@ -312,6 +312,7 @@ public class Gui extends Application {
         edgeGuiLineMap.put(edgeBetween, newLine);
         nodeArea.getChildren().add(newLine);
       }
+      unsavedChanges = true;
     }
   }
 
