@@ -277,10 +277,6 @@ public class Gui extends Application {
     return result.isPresent() && result.get() == ButtonType.OK;
   }
 
-  private Collection<GuiLine> getAllLines() {
-    return Collections.unmodifiableCollection(edgeGuiLineMap.values());
-  }
-
   class AddHandler implements EventHandler<ActionEvent> {
     @Override
     public void handle(ActionEvent event) {
@@ -294,8 +290,8 @@ public class Gui extends Application {
     @Override
     public void handle(ActionEvent event) {
       String node1 = input1.getText();
-      input1.clear();
       String node2 = input2.getText();
+      input1.clear();
       input2.clear();
 
       TextInputDialog tiDialog = new TextInputDialog();
@@ -361,13 +357,13 @@ public class Gui extends Application {
       input1.clear();
       input2.clear();
       int totalWeight = 0;
-      for (GuiLine edgeLine : getAllLines()) {
+      for (GuiLine edgeLine : edgeGuiLineMap.values()) {
         edgeLine.setStyle("-fx-stroke: black;");
       }
 
       for (Edge<String> edge : path.getEdges()) {
-        for (GuiLine edgeLine : getAllLines()) {
-          if (edgeLine.getLineEdge().equals(edge)) {
+        for (GuiLine edgeLine : edgeGuiLineMap.values()) {
+          if (edgeGuiLineMap.get(edge).equals(edgeLine)) {
             edgeLine.setStyle("-fx-stroke: red;");
             totalWeight += edge.getWeight();
 

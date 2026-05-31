@@ -22,21 +22,18 @@ public class GuiNode extends BorderPane {
         this.nodeName = nodeName;
 
         VBox titlebar = new VBox();
+        titlebar.getChildren().add(new Text(this.nodeName));
+        
         Circle nodeCircle = new Circle(GUI_NODE_XCOR, GUI_NODE_YCOR, GUI_NODE_RAD);
         nodeCircle.setFill(GUI_NODE_COLOR);
 
-        titlebar.getChildren().addAll(new Text(this.nodeName),nodeCircle);
-
         setTop(titlebar);
+        setBottom(nodeCircle);
         setPrefSize(40, 40);
         titlebar.setPrefSize(40, 20);
 
         setOnMousePressed(new StartDragHandler());
         setOnMouseDragged(new DragHandler());
-    }
-
-    public String getNodeName() {
-        return this.nodeName;
     }
 
     class StartDragHandler implements EventHandler<MouseEvent> {
