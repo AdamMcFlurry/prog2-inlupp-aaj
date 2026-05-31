@@ -9,6 +9,8 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.HashSet;
 
 import javax.imageio.ImageIO;
 
@@ -24,7 +26,7 @@ public class RouteFileManager {
 
     public static void saveTXT(Graph<String> graph, Map<String, GuiNode> nodeMap, String imagePath) throws IOException {
         PrintWriter writer = new PrintWriter("route.txt");
-
+        Set<String> savedEdges = new HashSet<>();
         writer.println("IMAGE:" + imagePath);
 
         for (String node : graph.getNodes()) {
@@ -33,8 +35,21 @@ public class RouteFileManager {
         }
         for (String node : graph.getNodes()) {
             for (Edge<String> edge : graph.getEdgesFrom(node)) {
+
+                String destination = edge.getDestination();
+                String edgeKey;
+
+                if (node.compareTo(destination) < 0) {
+                    edgeKey = node + ":" + destination;
+                } else {
+                    edgeKey = destination + ":" + node;
+                }
+                if (!savedEdges.contains(edgeKey)) {
+                    savedEdges.add(edgeKey);
+                
                 writer.println(
                         "EDGE:" + node + ":" + edge.getDestination() + ":" + edge.getName() + ":" + edge.getWeight());
+                }
             }
         }
         writer.close();
@@ -43,6 +58,7 @@ public class RouteFileManager {
     public static void loadTXT(Graph<String> graph, Pane nodeArea, Map<String, GuiNode> nodeMap, FlowPane nodeControls, String[] imagePathHolder)
             throws IOException {
         nodeArea.getChildren().clear();
+        nodeMap.clear();
         nodeArea.getChildren().add(nodeControls);
         FileReader fileReader = new FileReader("route.txt");
         BufferedReader reader = new BufferedReader(fileReader);
@@ -60,6 +76,7 @@ public class RouteFileManager {
                 double y = Double.parseDouble(parts[3]);
                 graph.add(nodeName);
                 GuiNode visualNode = new GuiNode(x, y, nodeName);
+                nodeMap.put(nodeName, visualNode);
                 nodeArea.getChildren().add(visualNode);
             } else if (line.startsWith("EDGE:")) {
                 String[] parts = line.split(":");
@@ -74,7 +91,9 @@ public class RouteFileManager {
             String name = edge[3];
             int weight = Integer.parseInt(edge[4]);
 
-            graph.connect(from, to, name, weight);
+            if (graph.getEdgeBetween(from, to) == null) {
+                graph.connect(from, to, name, weight);
+            }
 
             GuiNode startNode = nodeMap.get(from);
             GuiNode endNode = nodeMap.get(to);

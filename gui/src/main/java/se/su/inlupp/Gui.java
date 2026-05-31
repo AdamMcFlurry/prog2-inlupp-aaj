@@ -203,6 +203,7 @@ public class Gui extends Application {
   private void savePNG() {
     try {
       RouteFileManager.savePNG(nodeArea);
+      imagePath = new File("route.png").getAbsolutePath();
 
       unsavedChanges = false;
     } catch (IOException e) {
