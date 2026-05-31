@@ -69,13 +69,16 @@ public class Gui extends Application {
     createListView();
     createNodeControls();
     createNodeArea();
-    setupListeners();
 
     Scene scene = new Scene(root, 740, 580);
 
     setupStage(stage, scene);
 
     stage.show();
+  }
+
+  public static void main(String[] args) {
+    launch(args);
   }
 
   private void createMenuBar() {
@@ -86,13 +89,25 @@ public class Gui extends Application {
     newItem.setOnAction(new NewHandler());
 
     MenuItem saveItem = new MenuItem("Save Route");
-    saveItem.setOnAction(new SaveHandler());
+    saveItem.setOnAction((e) -> {
+      savePNG();
+      saveTXT();
+    });
 
     MenuItem loadItem = new MenuItem("Load Route");
-    loadItem.setOnAction(new LoadHandler());
+    loadItem.setOnAction((e) -> {
+      if (confirmUnsavedChanges()) {
+        loadTXT();
+        loadPNG();
+      }
+    });
 
     MenuItem exitItem = new MenuItem("Exit");
-    exitItem.setOnAction(new ExitHandler());
+    exitItem.setOnAction((e) -> {
+      if (confirmUnsavedChanges()) {
+        Platform.exit();
+      }
+    });
 
     fileMenu.getItems().addAll(newItem, saveItem, loadItem, exitItem);
 
@@ -133,7 +148,7 @@ public class Gui extends Application {
   private void createListView() {
     listView = new ListView<>();
     listView.setPrefWidth(150);
-    ObservableList<String> nodeList = graphModel.getGraphNodes();
+    ObservableList<String> nodeList = FXCollections.observableArrayList(graphModel.getGraphNodes());
     FXCollections.sort(nodeList);
     listView.setItems(nodeList);
     root.setLeft(listView);
@@ -146,7 +161,6 @@ public class Gui extends Application {
     nodeControls.setHgap(5);
 
     searchField = new TextField();
-    Button searchButton = new Button("Search");
 
     addButton = new Button("Add Node");
     addButton.setOnAction(new AddHandler());
@@ -157,20 +171,13 @@ public class Gui extends Application {
     Button loadImageButton = new Button("Load Image");
     loadImageButton.setOnAction(new LoadImageHandler());
 
-    nodeControls.getChildren().addAll(searchField, searchButton, addButton, deleteButton, loadImageButton);
+    nodeControls.getChildren().addAll(searchField, addButton, deleteButton, loadImageButton);
   }
 
   private void createNodeArea() {
     nodeArea = new Pane();
     nodeArea.getChildren().add(nodeControls);
     root.setCenter(nodeArea);
-  }
-
-  private void setupListeners() {
-    listView.getSelectionModel().selectedItemProperty()
-        .addListener((ObservableValue<? extends String> observable, String oldValue, String newValue) -> {
-          addConnectionButton.setDisable(false);
-        });
   }
 
   private void setupStage(Stage stage, Scene scene) {
@@ -180,10 +187,6 @@ public class Gui extends Application {
         event.consume();
       }
     });
-  }
-
-  public static void main(String[] args) {
-    launch(args);
   }
 
   private void saveTXT() {
@@ -250,7 +253,7 @@ public class Gui extends Application {
         nodeArea.getChildren().add(guiLine);
       }
 
-      ObservableList<String> updatedList = graphModel.getGraphNodes();
+      ObservableList<String> updatedList = FXCollections.observableArrayList(graphModel.getGraphNodes());
       FXCollections.sort(updatedList);
       listView.setItems(updatedList);
 
@@ -333,10 +336,9 @@ public class Gui extends Application {
       int edgeWeight = Integer.parseInt(result.get());
 
       if (result.isPresent()) {
-        Edge<String> edgeBetween = graphModel.connectNodes(node1, node2, edgeWeight);
         GuiLine newLine = new GuiLine(nodeMap.get(node1), nodeMap.get(node2));
+        graphModel.connectNodes(node1, node2, edgeWeight, edgeGuiLineMap, newLine);
 
-        edgeGuiLineMap.put(edgeBetween, newLine);
         nodeArea.getChildren().add(newLine);
       }
       unsavedChanges = true;
@@ -387,7 +389,7 @@ public class Gui extends Application {
       Path<String> path = graphModel.getPath(input1.getText(), input2.getText());
       input1.clear();
       input2.clear();
-      int totalWeight = 0;
+
       for (GuiLine edgeLine : edgeGuiLineMap.values()) {
         edgeLine.setStyle("-fx-stroke: black;");
       }
@@ -396,13 +398,11 @@ public class Gui extends Application {
         for (GuiLine edgeLine : edgeGuiLineMap.values()) {
           if (edgeGuiLineMap.get(edge).equals(edgeLine)) {
             edgeLine.setStyle("-fx-stroke: red;");
-            totalWeight += edge.getWeight();
-
           }
         }
       }
 
-      Alert alert = new Alert(Alert.AlertType.INFORMATION, "The total weight of the path is " + totalWeight);
+      Alert alert = new Alert(Alert.AlertType.INFORMATION, "The total weight of the path is " + path.getTotalWeight());
       alert.showAndWait();
     }
   }
@@ -485,30 +485,6 @@ public class Gui extends Application {
         listView.getItems().clear();
 
         unsavedChanges = false;
-      }
-    }
-  }
-
-  class SaveHandler implements EventHandler<ActionEvent> {
-    public void handle(ActionEvent event) {
-      savePNG();
-      saveTXT();
-    }
-  }
-
-  class LoadHandler implements EventHandler<ActionEvent> {
-    public void handle(ActionEvent event) {
-      if (confirmUnsavedChanges()) {
-        loadTXT();
-        loadPNG();
-      }
-    }
-  }
-
-  class ExitHandler implements EventHandler<ActionEvent> {
-    public void handle(ActionEvent event) {
-      if (confirmUnsavedChanges()) {
-        Platform.exit();
       }
     }
   }
